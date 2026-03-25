@@ -2,6 +2,12 @@
   "python.analysis.extraPaths": [
     "./backend"
   ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.defaultInterpreterPath": "backend/venv/Scripts/python.exe",
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}/backend"
+  },
   "python-envs.pythonProjects": [
     {
       "path": "backend",

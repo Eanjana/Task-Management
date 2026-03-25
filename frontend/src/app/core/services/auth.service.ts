@@ -6,8 +6,8 @@
 import { inject, Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { catchError, tap } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
+import { catchError, tap, map } from 'rxjs/operators';
+import { Observable, throwError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface User {
@@ -95,6 +95,32 @@ export class AuthService {
       catchError((err) => {
         this.logout();
         return throwError(() => err);
+      })
+    );
+  }
+
+  /**
+   * @description Check authentication status on app start
+   */
+  checkAuth(): Observable<boolean> {
+    const token = this.getToken();
+    if (!token) {
+      this._currentUser.set(null);
+      return of(false);
+    }
+
+    if (this._currentUser()) {
+      return of(true);
+    }
+
+    return this.http.get<User>(`${environment.apiUrl}/auth/me`).pipe(
+      map((user) => {
+        this._currentUser.set(user);
+        return true;
+      }),
+      catchError(() => {
+        this.logout();
+        return of(false);
       })
     );
   }

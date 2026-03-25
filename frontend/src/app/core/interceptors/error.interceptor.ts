@@ -20,10 +20,18 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 401) {
         auth.logout();
         message = 'Session expired. Please login again.';
-      } else if (error.status === 400) {
-        message = error.error?.detail ?? 'Bad request';
-      } else if (error.status === 404) {
-        message = error.error?.detail ?? 'Resource not found';
+      } else if (error.status === 400 || error.status === 404 || error.status === 422) {
+        // FastAPI returns 422 for validation errors, check for the message
+        const detail = error.error?.detail;
+        if (typeof detail === 'string') {
+          message = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          // If it's a validation error list, pick the first one
+          const firstErr = detail[0];
+          message = firstErr.msg || firstErr.message || 'Validation failed';
+        } else {
+          message = (error.status === 400 ? 'Bad request' : (error.status === 404 ? 'Resource not found' : 'Validation failed'));
+        }
       } else if (error.status === 500) {
         message = 'Server error. Please try again later.';
       } else if (error.status === 0) {
