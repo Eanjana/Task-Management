@@ -305,12 +305,6 @@
     gap: v.$spacing-sm;
   }
   
-  &__attachment-count {
-    font-size: 0.7rem;
-    color: var(--clr-text-muted);
-    @include m.flex-center;
-    gap: 2px;
-  }
 }
 
 // ── Task Form / Modal ──

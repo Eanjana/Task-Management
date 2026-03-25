@@ -60,7 +60,17 @@
               </td>
               
               <td class="task-table__cell task-table__cell--title" (click)="openDetailsModal(task)">
-                {{ task.title }}
+                <div class="task-table__title-wrapper">
+                  {{ task.title }}
+                  @if (task.attachments.length) {
+                    <div class="attachment-tag" title="Has attachments">
+                      <span class="attachment-tag__icon">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      </span>
+                      {{ task.attachments.length }}
+                    </div>
+                  }
+                </div>
               </td>
               
               <td class="task-table__cell" (click)="openDetailsModal(task)">
@@ -68,13 +78,13 @@
               </td>
               
               <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <span class="task-table__priority task-table__priority--{{ task.priority }}">
+                <span class="badge badge--dot badge--{{ task.priority }}">
                   {{ priorityLabels[task.priority] }}
                 </span>
               </td>
               
               <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <span class="task-table__status task-table__status--{{ task.status }}">
+                <span class="badge badge--{{ task.status }}">
                   {{ statusLabels[task.status] }}
                 </span>
               </td>

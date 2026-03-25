@@ -15,7 +15,7 @@ import {
 import { TaskService } from '../../services/task.service';
 import { TaskFormComponent } from '../../components/task-form/task-form';
 import { TaskDetailsComponent } from '../../components/task-details/task-details';
-import { Task, TaskStatus, TaskUpdatePayload, PRIORITY_LABELS } from '../../models/task.interface';
+import { Task, TaskStatus, TaskUpdatePayload, PRIORITY_LABELS, STATUS_LABELS } from '../../models/task.interface';
 import { ToastService } from '../../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FilterService } from '../../../../core/services/filter.service';
@@ -36,6 +36,8 @@ export class TaskBoardComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   protected showDetails = signal(false);
+  protected readonly priorityLabels = PRIORITY_LABELS;
+  protected readonly statusLabels = STATUS_LABELS;
   protected editingTask = signal<Task | null>(null);
   protected detailsTask = signal<Task | null>(null);
   protected draggedTask = signal<Task | null>(null);

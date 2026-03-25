@@ -189,10 +189,12 @@
             </div>
           }
 
-          <label class="task-modal__upload-btn" tabindex="0">
+          <label class="task-modal__upload-btn" tabindex="0" for="task-file-upload">
             📎 Upload Image
             <input
               type="file"
+              id="task-file-upload"
+              name="file_upload"
               accept="image/*"
               (change)="onFileSelected($event)"
               hidden
