@@ -1,0 +1,229 @@
+<div class="task-modal" (click)="onBackdropClick($event)">
+  <div class="task-modal__backdrop"></div>
+
+  <section class="task-modal__content" role="dialog" aria-modal="true" aria-labelledby="task-form-title">
+    <header class="task-modal__header">
+      <h2 class="task-modal__title" id="task-form-title">
+        @if (isEditMode()) { Edit Task } @else { New Task }
+      </h2>
+      <button
+        class="task-modal__close"
+        (click)="onClose()"
+        aria-label="Close dialog"
+        type="button"
+      >✕</button>
+    </header>
+
+    <form class="task-modal__body" (ngSubmit)="onSubmit()" #taskForm="ngForm">
+      <!-- Title -->
+      <div class="task-modal__field">
+        <label class="task-modal__label" for="task-title">Title</label>
+        <input
+          class="task-modal__input"
+          id="task-title"
+          type="text"
+          placeholder="What needs to be done?"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          name="title"
+          required
+          maxlength="200"
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="task-modal__field">
+        <label class="task-modal__label" for="task-desc">Description</label>
+        <textarea
+          class="task-modal__textarea"
+          id="task-desc"
+          placeholder="Add more details..."
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+          name="description"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <!-- Team -->
+      <div class="task-modal__field">
+        <label class="task-modal__label" for="task-team">Team</label>
+        <input
+          class="task-modal__input"
+          id="task-team"
+          type="text"
+          placeholder="Which team is this for? (e.g. Compliance, Audit)"
+          [ngModel]="team()"
+          (ngModelChange)="team.set($event)"
+          name="team"
+          maxlength="100"
+        />
+      </div>
+
+      <!-- Status & Priority Row -->
+      <div class="task-modal__row">
+        <div class="task-modal__field">
+          <label class="task-modal__label" for="task-status">Status</label>
+          <select
+            class="task-modal__select"
+            id="task-status"
+            [ngModel]="status()"
+            (ngModelChange)="status.set($event)"
+            name="status"
+          >
+            @for (opt of statusOptions; track opt[0]) {
+              <option [value]="opt[0]">{{ opt[1] }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="task-modal__field">
+          <label class="task-modal__label" for="task-priority">Priority</label>
+          <select
+            class="task-modal__select"
+            id="task-priority"
+            [ngModel]="priority()"
+            (ngModelChange)="priority.set($event)"
+            name="priority"
+          >
+            @for (opt of priorityOptions; track opt[0]) {
+              <option [value]="opt[0]">{{ opt[1] }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Assignee -->
+      <div class="task-modal__field">
+        <label class="task-modal__label" for="task-assignee">Assignee</label>
+        @if (isEditMode()) {
+          <select
+            class="task-modal__select"
+            id="task-assignee"
+            [ngModel]="assigneeId()"
+            (ngModelChange)="assigneeId.set($event ? +$event : null)"
+            name="assignee"
+          >
+            <option [value]="null">Unassigned</option>
+            @for (user of users(); track user.id) {
+              <option [value]="user.id">{{ user.username }}</option>
+            }
+          </select>
+        } @else {
+          <div class="task-modal__read-only-box">
+             Assigned to Me (Current User)
+          </div>
+        }
+      </div>
+
+      <!-- Time Taken -->
+      <div class="task-modal__row">
+        <div class="task-modal__field">
+          <label class="task-modal__label" for="task-hours">Hours</label>
+          <input
+            class="task-modal__input"
+            id="task-hours"
+            type="number"
+            min="0"
+            [ngModel]="timeHours()"
+            (ngModelChange)="timeHours.set($event)"
+            name="hours"
+          />
+        </div>
+        <div class="task-modal__field">
+          <label class="task-modal__label" for="task-minutes">Minutes</label>
+          <input
+            class="task-modal__input"
+            id="task-minutes"
+            type="number"
+            min="0"
+            max="59"
+            [ngModel]="timeMinutes()"
+            (ngModelChange)="timeMinutes.set($event)"
+            name="minutes"
+          />
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="task-modal__field">
+        <label class="task-modal__label">Attachment</label>
+        <div class="task-modal__attachments">
+          <!-- Existing attachments (edit mode) -->
+          @if (isEditMode() && existingAttachments().length) {
+            <div class="task-modal__attachment-preview">
+              @for (att of existingAttachments(); track att.id) {
+                <div class="attachment-thumb">
+                  <img
+                    class="task-modal__thumbnail"
+                    [src]="getAttachmentUrl(att.file_path)"
+                    [alt]="att.file_name"
+                  />
+                  <button 
+                    class="attachment-thumb__remove" 
+                    (click)="removeAttachment(att.id)"
+                    type="button"
+                    aria-label="Remove attachment"
+                  >✕</button>
+                  <span class="attachment-thumb__name">{{ att.file_name }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          @if (previewUrl()) {
+            <div class="task-modal__attachment-preview">
+              <div class="attachment-thumb">
+                <img
+                  class="task-modal__thumbnail"
+                  [src]="previewUrl()"
+                  alt="File preview"
+                />
+                <button 
+                  class="attachment-thumb__remove" 
+                  (click)="clearSelectedFile()"
+                  type="button"
+                  aria-label="Clear selection"
+                >✕</button>
+              </div>
+            </div>
+          }
+
+          <label class="task-modal__upload-btn" tabindex="0">
+            📎 Upload Image
+            <input
+              type="file"
+              accept="image/*"
+              (change)="onFileSelected($event)"
+              hidden
+            />
+          </label>
+        </div>
+      </div>
+    </form>
+
+    <footer class="task-modal__footer">
+      <button
+        class="btn btn--secondary"
+        (click)="onClose()"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn btn--primary"
+        (click)="onSubmit()"
+        [disabled]="isSubmitting() || !title()"
+        type="button"
+        id="task-save-btn"
+      >
+        @if (isSubmitting()) {
+          <span class="animate-spin" aria-hidden="true">⟳</span>
+          Saving...
+        } @else {
+          @if (isEditMode()) { Update Task } @else { Create Task }
+        }
+      </button>
+    </footer>
+  </section>
+</div>

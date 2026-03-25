@@ -1,0 +1,215 @@
+<section class="task-list" aria-label="Kanban board view">
+
+  @if (taskService.isLoading()) {
+    <div class="task-list__loading" aria-live="polite">
+      <span class="animate-spin" aria-hidden="true">⟳</span>
+      Loading board...
+    </div>
+  } @else {
+    <div class="kanban">
+      <!-- To Do Column -->
+      <div class="kanban__column kanban__column--todo">
+        <header class="kanban__column-header kanban__column-header--todo">
+          <div class="kanban__column-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            To Do
+          </div>
+          <span class="kanban__count">{{ filteredTodoTasks().length }}</span>
+        </header>
+
+        <div
+          class="kanban__cards"
+          role="list"
+          (dragover)="onDragOver($event)"
+          (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop('todo', $event)"
+        >
+          @for (task of filteredTodoTasks(); track task.id) {
+            <article
+              class="task-card"
+              draggable="true"
+              role="listitem"
+              (dragstart)="onDragStart(task, $event)"
+              (dragend)="onDragEnd($event)"
+              (click)="openDetailsModal(task)"
+            >
+              <div class="task-card__header">
+                <span class="task-card__id">TS-{{ task.id }}</span>
+                <h3 class="task-card__title">{{ task.title }}</h3>
+                <div class="task-card__menu">
+                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
+                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+                </div>
+              </div>
+              @if (task.description) {
+                <p class="task-card__description">{{ task.description }}</p>
+              }
+              <footer class="task-card__footer">
+                <div class="task-card__tags">
+                  <span class="task-table__priority task-table__priority--{{ task.priority }}">
+                    {{ task.priority }}
+                  </span>
+                  @if (task.attachments.length) {
+                    <span style="font-size: 0.7rem; color: var(--clr-text-muted);">
+                      📎 {{ task.attachments.length }}
+                    </span>
+                  }
+                </div>
+                @if (task.assignee) {
+                  <span class="task-row__avatar" [title]="task.assignee.username">
+                    {{ task.assignee.username.charAt(0).toUpperCase() }}
+                  </span>
+                }
+              </footer>
+            </article>
+          }
+        </div>
+      </div>
+
+      <!-- In Progress Column -->
+      <div class="kanban__column kanban__column--in-progress">
+        <header class="kanban__column-header kanban__column-header--in-progress">
+          <div class="kanban__column-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            In Progress
+          </div>
+          <span class="kanban__count">{{ filteredInProgressTasks().length }}</span>
+        </header>
+
+        <div
+          class="kanban__cards"
+          role="list"
+          (dragover)="onDragOver($event)"
+          (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop('in_progress', $event)"
+        >
+          @for (task of filteredInProgressTasks(); track task.id) {
+            <article
+              class="task-card"
+              draggable="true"
+              role="listitem"
+              (dragstart)="onDragStart(task, $event)"
+              (dragend)="onDragEnd($event)"
+              (click)="openDetailsModal(task)"
+            >
+              <div class="task-card__header">
+                <span class="task-card__id">TS-{{ task.id }}</span>
+                <h3 class="task-card__title">{{ task.title }}</h3>
+                <div class="task-card__menu">
+                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
+                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+                </div>
+              </div>
+              @if (task.description) {
+                <p class="task-card__description">{{ task.description }}</p>
+              }
+              <footer class="task-card__footer">
+                <div class="task-card__tags">
+                  <span class="task-table__priority task-table__priority--{{ task.priority }}">
+                    {{ task.priority }}
+                  </span>
+                  @if (task.attachments.length) {
+                    <span style="font-size: 0.7rem; color: var(--clr-text-muted);">
+                      📎 {{ task.attachments.length }}
+                    </span>
+                  }
+                </div>
+                @if (task.assignee) {
+                  <span class="task-row__avatar" [title]="task.assignee.username">
+                    {{ task.assignee.username.charAt(0).toUpperCase() }}
+                  </span>
+                }
+              </footer>
+            </article>
+          }
+        </div>
+      </div>
+
+      <!-- Completed Column -->
+      <div class="kanban__column kanban__column--completed">
+        <header class="kanban__column-header kanban__column-header--completed">
+          <div class="kanban__column-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Completed
+          </div>
+          <span class="kanban__count">{{ filteredCompletedTasks().length }}</span>
+        </header>
+
+        <div
+          class="kanban__cards"
+          role="list"
+          (dragover)="onDragOver($event)"
+          (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop('completed', $event)"
+        >
+          @for (task of filteredCompletedTasks(); track task.id) {
+            <article
+              class="task-card"
+              draggable="true"
+              role="listitem"
+              (dragstart)="onDragStart(task, $event)"
+              (dragend)="onDragEnd($event)"
+              (click)="openDetailsModal(task)"
+            >
+              <div class="task-card__header">
+                <span class="task-card__id">TS-{{ task.id }}</span>
+                <h3 class="task-card__title task-card__title--completed">
+                  {{ task.title }}
+                </h3>
+                <div class="task-card__menu">
+                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
+                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+                </div>
+              </div>
+              @if (task.description) {
+                <p class="task-card__description">{{ task.description }}</p>
+              }
+              <footer class="task-card__footer">
+                <div class="task-card__tags">
+                  <span class="task-table__priority task-table__priority--{{ task.priority }}">
+                    {{ task.priority }}
+                  </span>
+                  @if (task.attachments.length) {
+                    <span style="font-size: 0.7rem; color: var(--clr-text-muted);">
+                      📎 {{ task.attachments.length }}
+                    </span>
+                  }
+                </div>
+                @if (task.assignee) {
+                  <span class="task-row__avatar" [title]="task.assignee.username">
+                    {{ task.assignee.username.charAt(0).toUpperCase() }}
+                  </span>
+                }
+              </footer>
+            </article>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- Task Form Modal -->
+@if (filterService.showCreateTaskModal()) {
+  <app-task-form
+    [task]="editingTask()"
+    (closed)="closeForm()"
+    (saved)="onFormSaved()"
+  />
+}
+
+<!-- Task Details Modal -->
+@if (showDetails()) {
+  @let t = detailsTask();
+  @if (t) {
+    <app-task-details
+      [task]="t"
+      (closed)="closeDetailsModal()"
+      (edit)="onDetailsEdit($event)"
+      (delete)="onDetailsDelete($event)"
+    />
+  }
+}

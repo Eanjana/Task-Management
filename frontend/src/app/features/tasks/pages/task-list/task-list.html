@@ -1,0 +1,127 @@
+<section class="task-list" aria-label="Task list view">
+
+  @if (taskService.isLoading()) {
+    <div class="task-list__loading" aria-live="polite">
+      <span class="animate-spin" aria-hidden="true">⟳</span>
+      Loading tasks...
+    </div>
+  } @else {
+    <div class="task-table-container">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-table__th task-table__th--checkbox">
+              <input 
+                type="checkbox" 
+                aria-label="Select all" 
+                [checked]="filteredTasks().length > 0 && selectedTaskIds().size === filteredTasks().length"
+                (change)="toggleAllSelections()"
+              />
+            </th>
+            <th class="task-table__th">
+              @if (selectedTaskIds().size > 0) {
+                <button class="btn btn--danger btn--xs" (click)="deleteSelectedTasks()">
+                  🗑 Delete Selected ({{ selectedTaskIds().size }})
+                </button>
+              } @else {
+                Task ID
+              }
+            </th>
+            <th class="task-table__th">Task Name</th>
+            <th class="task-table__th">Team</th>
+            <th class="task-table__th">Criticality</th>
+            <th class="task-table__th">Status</th>
+            <th class="task-table__th">Assignee</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (task of filteredTasks(); track task.id) {
+            <tr 
+              class="task-table__row animate-fade-in-up" 
+              [class.task-table__row--selected]="selectedTaskIds().has(task.id)"
+            >
+              <td class="task-table__cell task-table__cell--checkbox">
+                <input 
+                  type="checkbox" 
+                  [attr.aria-label]="'Select task ' + task.id" 
+                  [checked]="selectedTaskIds().has(task.id)"
+                  (change)="toggleTaskSelection(task.id, $event)"
+                />
+              </td>
+              
+              <td class="task-table__cell">
+                <a 
+                  href="javascript:void(0)" 
+                  class="task-table__link" 
+                  (click)="openDetailsModal(task); $event.preventDefault()"
+                >
+                  TS-{{ task.id }}
+                </a>
+              </td>
+              
+              <td class="task-table__cell task-table__cell--title" (click)="openDetailsModal(task)">
+                {{ task.title }}
+              </td>
+              
+              <td class="task-table__cell" (click)="openDetailsModal(task)">
+                <span class="task-table__team">{{ task.team || 'No Team' }}</span>
+              </td>
+              
+              <td class="task-table__cell" (click)="openDetailsModal(task)">
+                <span class="task-table__priority task-table__priority--{{ task.priority }}">
+                  {{ priorityLabels[task.priority] }}
+                </span>
+              </td>
+              
+              <td class="task-table__cell" (click)="openDetailsModal(task)">
+                <span class="task-table__status task-table__status--{{ task.status }}">
+                  {{ statusLabels[task.status] }}
+                </span>
+              </td>
+              
+              <td class="task-table__cell" (click)="openDetailsModal(task)">
+                <div class="task-table__assignee">
+                  @if (task.assignee) {
+                    <span class="task-row__avatar" [title]="task.assignee.username" [style.background-color]="'#0052cc'">
+                      {{ getInitials(task.assignee.username) }}
+                    </span>
+                    <span class="task-table__assignee-name">{{ task.assignee.username }}</span>
+                  } @else {
+                    <span class="task-table__unassigned">Unassigned</span>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+ @empty {
+            <tr>
+              <td colspan="7" class="task-table__empty">No records found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<!-- Task Form Modal -->
+@if (filterService.showCreateTaskModal()) {
+  <app-task-form
+    [task]="editingTask()"
+    (closed)="closeForm()"
+    (saved)="onFormSaved()"
+  />
+}
+
+<!-- Task Details Modal -->
+@if (showDetails()) {
+  @let t = detailsTask();
+  @if (t) {
+    <app-task-details
+      [task]="t"
+      (closed)="closeDetailsModal()"
+      (edit)="onDetailsEdit($event)"
+      (delete)="onDetailsDelete($event)"
+    />
+  }
+}

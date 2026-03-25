@@ -1,0 +1,132 @@
+// ═══════════════════════════════════════════
+// SCSS MIXINS
+// ═══════════════════════════════════════════
+
+@use 'sass:map';
+@use 'variables' as v;
+
+// ── Responsive Breakpoints ──
+@mixin respond-above($bp) {
+  $value: map.get(v.$breakpoints, $bp);
+  @if $value {
+    @media (min-width: $value) {
+      @content;
+    }
+  }
+}
+
+@mixin respond-below($bp) {
+  $value: map.get(v.$breakpoints, $bp);
+  @if $value {
+    @media (max-width: ($value - 1px)) {
+      @content;
+    }
+  }
+}
+
+// ── Flexbox helpers ──
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Focus Ring ──
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--clr-primary);
+    outline-offset: 2px;
+    border-radius: v.$radius-sm;
+  }
+}
+
+// ── Input Base ──
+@mixin input-base {
+  width: 100%;
+  padding: v.$spacing-sm v.$spacing-md;
+  font-size: v.$font-md;
+  font-family: inherit;
+  color: var(--clr-text);
+  background: var(--clr-input-bg);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-md;
+  transition: border-color v.$transition-fast, box-shadow v.$transition-fast;
+
+  &::placeholder {
+    color: var(--clr-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--clr-primary);
+    box-shadow: 0 0 0 3px var(--clr-primary-alpha);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ── Label ──
+@mixin label-caps {
+  font-size: v.$font-xs;
+  font-weight: v.$font-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--clr-text-secondary);
+}
+
+// ── Card ──
+@mixin card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-lg;
+  box-shadow: v.$shadow-sm;
+}
+
+// ── Glassmorphism ──
+@mixin glass {
+  background: var(--clr-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--clr-glass-border);
+}
+
+// ── Truncate Text ──
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Scrollbar ──
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--clr-border);
+    border-radius: v.$radius-full;
+
+    &:hover {
+      background: var(--clr-text-muted);
+    }
+  }
+}

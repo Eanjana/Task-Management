@@ -1,0 +1,48 @@
+// ═══════════════════════════════════════════
+// TYPOGRAPHY
+// ═══════════════════════════════════════════
+
+@use 'variables' as v;
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: v.$font-base;
+  font-weight: v.$font-regular;
+  line-height: 1.6;
+  color: var(--clr-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: v.$font-semibold;
+  line-height: 1.3;
+  color: var(--clr-text);
+  margin: 0;
+}
+
+h1 { font-size: v.$font-3xl; }
+h2 { font-size: v.$font-2xl; }
+h3 { font-size: v.$font-xl; }
+h4 { font-size: v.$font-lg; }
+h5 { font-size: v.$font-base; }
+
+p {
+  margin: 0 0 v.$spacing-md;
+  color: var(--clr-text-secondary);
+}
+
+a {
+  color: var(--clr-primary);
+  text-decoration: none;
+  transition: color v.$transition-fast;
+
+  &:hover {
+    color: var(--clr-primary-hover);
+  }
+}
+
+small {
+  font-size: v.$font-xs;
+  color: var(--clr-text-muted);
+}

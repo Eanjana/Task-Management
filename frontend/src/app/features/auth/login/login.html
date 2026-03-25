@@ -1,0 +1,116 @@
+<section class="login" role="main">
+  <!-- Theme toggle -->
+  <button
+    class="theme-toggle"
+    style="position: absolute; top: 24px; right: 24px; z-index: 2"
+    (click)="themeService.toggle()"
+    [attr.aria-label]="themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+    [attr.aria-pressed]="themeService.theme() === 'dark'"
+    type="button"
+  >
+    {{ themeService.theme() === 'dark' ? '☀️' : '🌙' }}
+  </button>
+
+  <div class="login__card">
+    <div class="login__logo">
+      <span class="login__logo-icon" aria-hidden="true">T</span>
+      <span class="login__logo-text">TaskFlow</span>
+    </div>
+
+    <h1 class="login__title">
+      @if (isRegisterMode()) {
+        Create Account
+      } @else {
+        Welcome Back
+      }
+    </h1>
+    <p class="login__subtitle">
+      @if (isRegisterMode()) {
+        Sign up to start managing your tasks
+      } @else {
+        Sign in to continue to your workspace
+      }
+    </p>
+
+    <form class="login__form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      @if (isRegisterMode()) {
+        <div class="login__field">
+          <label class="login__label" for="login-username">Username</label>
+          <input
+            class="login__input"
+            id="login-username"
+            type="text"
+            placeholder="Choose a username"
+            [ngModel]="username()"
+            (ngModelChange)="username.set($event)"
+            name="username"
+            required
+            minlength="3"
+            autocomplete="username"
+          />
+        </div>
+      }
+
+      <div class="login__field">
+        <label class="login__label" for="login-email">Email</label>
+        <input
+          class="login__input"
+          id="login-email"
+          type="email"
+          placeholder="Enter your email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          name="email"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="login__field">
+        <label class="login__label" for="login-password">Password</label>
+        <input
+          class="login__input"
+          id="login-password"
+          type="password"
+          placeholder="Enter your password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          name="password"
+          required
+          minlength="6"
+          autocomplete="current-password"
+        />
+      </div>
+
+      @if (errorMessage()) {
+        <p class="login__error" role="alert" aria-live="polite">
+          {{ errorMessage() }}
+        </p>
+      }
+
+      <button
+        class="btn btn--primary login__submit"
+        type="submit"
+        [disabled]="isLoading()"
+        id="login-submit-btn"
+      >
+        @if (isLoading()) {
+          <span class="animate-spin" aria-hidden="true">⟳</span>
+          @if (isRegisterMode()) { Creating... } @else { Signing in... }
+        } @else {
+          @if (isRegisterMode()) { Create Account } @else { Sign In }
+        }
+      </button>
+    </form>
+
+    <p class="login__footer">
+      @if (isRegisterMode()) {
+        Already have an account?
+        <a href="javascript:void(0)" (click)="toggleMode()">Sign In</a>
+      } @else {
+        Don't have an account?
+        <a href="javascript:void(0)" (click)="toggleMode()">Sign Up</a>
+      }
+    </p>
+  </div>
+</section>

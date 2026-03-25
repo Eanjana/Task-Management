@@ -1,0 +1,128 @@
+// ═══════════════════════════════════════════
+// THEMES — Light & Dark
+// ═══════════════════════════════════════════
+
+// ── Light Theme ──
+[data-theme='light'] {
+  // Primary - Blue
+  --clr-primary: #0077b6;
+  --clr-primary-rgb: 0, 119, 182;
+  --clr-primary-hover: #023e8a;
+  --clr-primary-alpha: rgba(0, 119, 182, 0.15);
+  --clr-primary-subtle: rgba(0, 119, 182, 0.08);
+
+  // Backgrounds
+  --clr-bg: #f5f6fa;
+  --clr-surface: #ffffff;
+  --clr-surface-hover: #f8f9fc;
+  --clr-input-bg: #ffffff;
+  --clr-sidebar-bg: #ffffff;
+  --clr-navbar-bg: rgba(255, 255, 255, 0.85);
+
+  // Glass
+  --clr-glass-bg: rgba(255, 255, 255, 0.65);
+  --clr-glass-border: rgba(255, 255, 255, 0.3);
+
+  // Text
+  --clr-text: #1e1e2e;
+  --clr-text-secondary: #585e71;
+  --clr-text-muted: #9ca3af;
+  --clr-text-inverse: #ffffff;
+
+  // Borders
+  --clr-border: #e4e7ec;
+  --clr-border-hover: #c9cdd5;
+  --clr-divider: #f0f1f5;
+
+  // Status
+  --clr-success: #0b9e81; // Teal
+  --clr-success-bg: rgba(11, 158, 129, 0.1);
+  --clr-warning: #f7b731;
+  --clr-warning-bg: rgba(247, 183, 49, 0.12);
+  --clr-danger: #ea2027;
+  --clr-danger-bg: rgba(234, 32, 39, 0.1);
+  --clr-info: #0097e6; // Blue 
+  --clr-info-bg: rgba(0, 151, 230, 0.1);
+
+  // Priority colors
+  --clr-priority-low: #00b894;
+  --clr-priority-normal: #74b9ff;
+  --clr-priority-high: #fdcb6e;
+  --clr-priority-urgent: #e17055;
+
+  // Kanban
+  --clr-kanban-todo: #dfe6e9;
+  --clr-kanban-progress: #74b9ff;
+  --clr-kanban-done: #00b894;
+
+  // Shadows
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+  // Avatar
+  // Avatar
+  --clr-avatar-bg: linear-gradient(135deg, #0077b6, #00b4d8);
+}
+
+// ── Dark Theme ──
+[data-theme='dark'] {
+  // Primary - Cyan/Blue
+  --clr-primary: #00b4d8;
+  --clr-primary-rgb: 0, 180, 216;
+  --clr-primary-hover: #90e0ef;
+  --clr-primary-alpha: rgba(0, 180, 216, 0.2);
+  --clr-primary-subtle: rgba(0, 180, 216, 0.08);
+
+  // Backgrounds
+  --clr-bg: #0f0f1a;
+  --clr-surface: #1a1a2e;
+  --clr-surface-hover: #222240;
+  --clr-input-bg: #16162b;
+  --clr-sidebar-bg: #12121f;
+  --clr-navbar-bg: rgba(15, 15, 26, 0.85);
+
+  // Glass
+  --clr-glass-bg: rgba(26, 26, 46, 0.7);
+  --clr-glass-border: rgba(255, 255, 255, 0.06);
+
+  // Text
+  --clr-text: #eaeaf5;
+  --clr-text-secondary: #a0a3bd;
+  --clr-text-muted: #6b6e8a;
+  --clr-text-inverse: #0f0f1a;
+
+  // Borders
+  --clr-border: #2a2a45;
+  --clr-border-hover: #3d3d5c;
+  --clr-divider: #222240;
+
+  // Status
+  --clr-success: #26dead; // Teal
+  --clr-success-bg: rgba(38, 222, 173, 0.12);
+  --clr-warning: #fed330;
+  --clr-warning-bg: rgba(254, 211, 48, 0.12);
+  --clr-danger: #ff4d4d;
+  --clr-danger-bg: rgba(255, 77, 77, 0.12);
+  --clr-info: #45aaf2; // Blue
+  --clr-info-bg: rgba(69, 170, 242, 0.12);
+
+  // Priority colors
+  --clr-priority-low: #55efc4;
+  --clr-priority-normal: #74b9ff;
+  --clr-priority-high: #ffeaa7;
+  --clr-priority-urgent: #ff7675;
+
+  // Kanban
+  --clr-kanban-todo: #2a2a45;
+  --clr-kanban-progress: rgba(116, 185, 255, 0.2);
+  --clr-kanban-done: rgba(85, 239, 196, 0.2);
+
+  // Shadows
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  // Avatar
+  --clr-avatar-bg: linear-gradient(135deg, #00b4d8, #0077b6);
+}

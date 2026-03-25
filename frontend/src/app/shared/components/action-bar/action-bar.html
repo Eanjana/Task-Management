@@ -1,0 +1,77 @@
+<div class="action-bar-container">
+  <div class="action-bar-header">
+    <h2 class="action-bar-title">{{ pageTitle() }}</h2>
+  </div>
+  <div class="action-bar">
+  <!-- Left Side: Search & Filters -->
+  <div class="action-bar__filters">
+    <div class="action-bar__search">
+      <svg class="action-bar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input 
+        type="text" 
+        class="action-bar__search-input" 
+        placeholder="Search tasks, teams..." 
+        [ngModel]="filterService.filters().searchQuery" 
+        (ngModelChange)="onSearchChange($event)"
+      >
+    </div>
+
+    <div class="action-bar__filter-group">
+      <select 
+        class="action-bar__select" 
+        [ngModel]="filterService.filters().team" 
+        (ngModelChange)="onFilterChange('team', $event)"
+        aria-label="Filter by team"
+      >
+        <option value="">All Teams ⌄</option>
+        <option value="Frontend">Frontend</option>
+        <option value="Backend">Backend</option>
+        <option value="Design">Design</option>
+        <option value="Compliance">Compliance</option>
+      </select>
+
+      <select 
+        class="action-bar__select" 
+        [ngModel]="filterService.filters().criticality" 
+        (ngModelChange)="onFilterChange('criticality', $event)"
+        aria-label="Filter by criticality"
+      >
+        <option value="">Criticality ⌄</option>
+        <option value="Low">Low</option>
+        <option value="Normal">Normal</option>
+        <option value="High">High</option>
+        <option value="Urgent">Urgent</option>
+      </select>
+
+      <select 
+        class="action-bar__select" 
+        [ngModel]="filterService.filters().assignee" 
+        (ngModelChange)="onFilterChange('assignee', $event)"
+        aria-label="Filter by assignee"
+      >
+        <option value="">Assignee ⌄</option>
+        <option value="Me">Me</option>
+        <option value="Unassigned">Unassigned</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Right Side: Views & Actions -->
+  <div class="action-bar__actions">
+    <div class="action-bar__views">
+        <a class="action-bar__view-btn" routerLink="/tasks" routerLinkActive="action-bar__view-btn--active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          List
+        </a>
+        <a class="action-bar__view-btn" routerLink="/board" routerLinkActive="action-bar__view-btn--active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Board
+        </a>
+    </div>
+
+    <button class="btn btn--primary btn--sm action-bar__create-btn" (click)="openCreateModal()" type="button">
+      <span>Create Task</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+</div>

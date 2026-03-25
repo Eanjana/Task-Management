@@ -1,0 +1,87 @@
+<div class="modal-backdrop animate-fade-in" (click)="closed.emit()">
+  <div
+    class="modal-content animate-slide-up"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-labelledby="task-details-title"
+  >
+    <!-- Header -->
+    <header class="task-details__header">
+      <div class="task-details__status-badge task-row__priority--{{ task().priority }}">
+        {{ priorityLabels[task().priority] }}
+      </div>
+      <div class="task-details__actions">
+        <button class="btn btn--secondary btn--sm" (click)="edit.emit(task())" aria-label="Edit Task">
+          ✎ Edit
+        </button>
+        <button class="btn btn--danger btn--sm" (click)="delete.emit(task())" aria-label="Delete Task">
+          🗑 Delete
+        </button>
+        <button class="btn btn--icon" (click)="closed.emit()" aria-label="Close">
+          ✕
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="task-details__main custom-scrollbar">
+      <h1 id="task-details-title" class="task-details__title">{{ task().title }}</h1>
+      
+      <div class="task-details__meta-grid">
+        <div class="task-details__meta-item">
+          <span class="task-details__meta-label">Status</span>
+          <span class="task-details__meta-value status-indicator status-indicator--{{ task().status }}">
+            {{ statusLabels[task().status] }}
+          </span>
+        </div>
+        <div class="task-details__meta-item">
+          <span class="task-details__meta-label">
+            @if (task().status === 'completed') { Time Taken } @else { Assigned Time }
+          </span>
+          <span class="task-details__meta-value">🕐 {{ formattedTime() }}</span>
+        </div>
+        <div class="task-details__meta-item">
+          <span class="task-details__meta-label">Assignee</span>
+          <div class="task-details__assignee">
+            @if (task().assignee) {
+              <span class="task-row__avatar">{{ task().assignee?.username?.charAt(0)?.toUpperCase() }}</span>
+              <span class="task-details__meta-value">{{ task().assignee?.username }}</span>
+            } @else {
+              <span class="task-details__meta-value">Unassigned</span>
+            }
+          </div>
+        </div>
+        <div class="task-details__meta-item">
+          <span class="task-details__meta-label">Created</span>
+          <span class="task-details__meta-value">{{ task().created_at | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <div class="task-details__description-section">
+        <h2 class="task-details__section-title">Description</h2>
+        <div class="task-details__description">
+          {{ task().description || 'No description provided.' }}
+        </div>
+      </div>
+
+      @if (task().attachments.length) {
+        <div class="task-details__attachments-section">
+          <h2 class="task-details__section-title">Attachments ({{ task().attachments.length }})</h2>
+          <div class="task-details__attachments-grid">
+            @for (file of task().attachments; track file.id) {
+              <div class="attachment-card">
+                <a [href]="getAttachmentUrl(file.file_path)" target="_blank" class="attachment-card__preview">
+                  <img [src]="getAttachmentUrl(file.file_path)" [alt]="file.file_name" />
+                </a>
+                <div class="attachment-card__info">
+                  <span class="attachment-card__name">{{ file.file_name }}</span>
+                  <span class="attachment-card__date">{{ file.created_at | date:'shortDate' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </main>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+// ═══════════════════════════════════════════
+// ATOM — THEME TOGGLE
+// ═══════════════════════════════════════════
+
+@use '../helpers/variables' as v;
+@use '../helpers/mixins' as m;
+
+.theme-toggle {
+  @include m.flex-center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-full;
+  cursor: pointer;
+  transition: all v.$transition-fast;
+  color: var(--clr-text-secondary);
+  font-size: 1.15rem;
+  @include m.focus-ring;
+
+  &:hover {
+    background: var(--clr-primary-subtle);
+    color: var(--clr-primary);
+    border-color: var(--clr-primary-alpha);
+    transform: rotate(15deg);
+  }
+}

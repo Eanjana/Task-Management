@@ -1,0 +1,540 @@
+// ═══════════════════════════════════════════
+// ORGANISM — DASHBOARD/TASKS
+// ═══════════════════════════════════════════
+
+@use '../helpers/variables' as v;
+@use '../helpers/mixins' as m;
+
+// ── Task Table / List ──
+.task-list {
+  @include m.flex-column;
+  gap: v.$spacing-lg;
+  padding: v.$spacing-lg;
+  animation: fadeIn 300ms ease forwards;
+
+  &__header {
+    @include m.flex-between;
+    flex-wrap: wrap;
+    gap: v.$spacing-md;
+  }
+
+  &__title {
+    font-size: v.$font-2xl;
+    font-weight: v.$font-bold;
+  }
+
+  &__actions {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+  }
+
+  &__group {
+    @include m.flex-column;
+    gap: v.$spacing-sm;
+  }
+
+  &__group-title {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    padding: v.$spacing-sm v.$spacing-md;
+    font-size: v.$font-sm;
+    font-weight: v.$font-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--clr-text-muted);
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--clr-divider);
+    }
+  }
+}
+
+.task-row {
+  @include m.flex-between;
+  gap: v.$spacing-md;
+  padding: v.$spacing-md v.$spacing-lg;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-md;
+  cursor: pointer;
+  transition: all v.$transition-fast;
+
+  &:hover {
+    background: var(--clr-surface-hover);
+    border-color: var(--clr-border-hover);
+    transform: translateX(2px);
+  }
+
+  &__info {
+    @include m.flex-center;
+    gap: v.$spacing-md;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: v.$font-medium;
+    color: var(--clr-text);
+    @include m.truncate;
+  }
+
+  &__meta {
+    @include m.flex-center;
+    gap: v.$spacing-lg;
+    flex-shrink: 0;
+  }
+
+  &__priority {
+    padding: 2px v.$spacing-sm;
+    font-size: v.$font-xs;
+    font-weight: v.$font-semibold;
+    border-radius: v.$radius-full;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+
+    &--low {
+      color: var(--clr-priority-low);
+      background: rgba(0, 184, 148, 0.12);
+    }
+    &--normal {
+      color: var(--clr-priority-normal);
+      background: rgba(116, 185, 255, 0.12);
+    }
+    &--high {
+      color: var(--clr-priority-high);
+      background: rgba(253, 203, 110, 0.15);
+    }
+    &--urgent {
+      color: var(--clr-priority-urgent);
+      background: rgba(225, 112, 85, 0.12);
+    }
+  }
+
+  &__time {
+    @include m.flex-center;
+    gap: 4px;
+    font-size: v.$font-xs;
+    color: var(--clr-text-muted);
+    min-width: 60px;
+  }
+
+  &__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: v.$radius-full;
+    background: var(--clr-avatar-bg);
+    @include m.flex-center;
+    font-size: v.$font-xs;
+    font-weight: v.$font-bold;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+}
+
+// ── Kanban Board ──
+.kanban {
+  display: flex;
+  gap: v.$spacing-lg;
+  padding: v.$spacing-lg;
+  overflow-x: auto;
+  min-height: calc(100vh - #{v.$navbar-height} - 120px);
+  @include m.custom-scrollbar;
+
+  &__column {
+    @include m.flex-column;
+    min-width: 320px;
+    max-width: 360px;
+    flex: 1;
+    background: var(--clr-bg);
+    border-radius: v.$radius-lg;
+    border: 1px solid var(--clr-border);
+    overflow: hidden;
+  }
+
+  &__column-header {
+    @include m.flex-between;
+    padding: v.$spacing-md v.$spacing-lg;
+    border-bottom: 1px solid var(--clr-border);
+
+    &--todo { border-top: 3px solid var(--clr-text-muted); }
+    &--in-progress { border-top: 3px solid var(--clr-info); }
+    &--completed { border-top: 3px solid var(--clr-success); }
+  }
+
+  &__column-title {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    font-size: v.$font-md;
+    font-weight: v.$font-semibold;
+  }
+
+  &__count {
+    @include m.flex-center;
+    width: 22px;
+    height: 22px;
+    font-size: v.$font-xs;
+    font-weight: v.$font-bold;
+    background: var(--clr-primary-subtle);
+    color: var(--clr-primary);
+    border-radius: v.$radius-full;
+  }
+
+  &__cards {
+    @include m.flex-column;
+    gap: v.$spacing-sm;
+    padding: v.$spacing-md;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+    @include m.custom-scrollbar;
+
+    &--drag-over {
+      background: var(--clr-primary-subtle);
+      border-radius: v.$radius-md;
+      outline: 2px dashed var(--clr-primary);
+      outline-offset: -4px;
+    }
+  }
+}
+
+.task-card {
+  @include m.card;
+  padding: v.$spacing-md;
+  cursor: grab;
+  transition: all v.$transition-base;
+  animation: fadeInUp 300ms ease forwards;
+  position: relative;
+  background: var(--clr-surface);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: v.$shadow-md;
+    border-color: var(--clr-primary);
+
+    .task-card__menu {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  &:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+  }
+
+  &--dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    background: var(--clr-primary-alpha);
+  }
+
+  &__header {
+    @include m.flex-between;
+    align-items: flex-start;
+    margin-bottom: v.$spacing-xs;
+  }
+
+  &__title {
+    font-weight: v.$font-semibold;
+    font-size: v.$font-md;
+    color: var(--clr-text);
+    line-height: 1.4;
+    flex: 1;
+    
+    &--completed {
+      text-decoration: line-through;
+      color: var(--clr-text-muted);
+    }
+  }
+
+  &__menu {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transform: translateX(4px);
+    transition: all v.$transition-fast;
+    margin-left: v.$spacing-sm;
+
+    .btn--icon {
+      width: 24px;
+      height: 24px;
+      @include m.flex-center;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      background: var(--clr-surface-hover);
+      border: 1px solid var(--clr-border);
+      color: var(--clr-text-secondary);
+      cursor: pointer;
+      
+      &:hover {
+        background: var(--clr-primary-alpha);
+        border-color: var(--clr-primary);
+        color: var(--clr-primary);
+      }
+      
+      &.btn--danger-hover:hover {
+        background: var(--clr-danger-bg);
+        border-color: var(--clr-danger);
+        color: var(--clr-danger);
+      }
+    }
+  }
+
+  &__description {
+    font-size: v.$font-xs;
+    color: var(--clr-text-secondary);
+    margin-bottom: v.$spacing-md;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+
+  &__footer {
+    @include m.flex-between;
+    margin-top: auto;
+  }
+
+  &__tags {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+  }
+  
+  &__attachment-count {
+    font-size: 0.7rem;
+    color: var(--clr-text-muted);
+    @include m.flex-center;
+    gap: 2px;
+  }
+}
+
+// ── Task Form / Modal ──
+.task-modal {
+  position: fixed;
+  inset: 0;
+  z-index: v.$z-modal-backdrop;
+  @include m.flex-center;
+  animation: fadeIn 200ms ease forwards;
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  &__content {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--clr-surface);
+    border-radius: v.$radius-xl;
+    box-shadow: var(--shadow-modal);
+    animation: scaleIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    @include m.custom-scrollbar;
+  }
+
+  &__header {
+    @include m.flex-between;
+    padding: v.$spacing-lg v.$spacing-xl;
+    border-bottom: 1px solid var(--clr-border);
+  }
+
+  &__title {
+    font-size: v.$font-lg;
+    font-weight: v.$font-semibold;
+  }
+
+  &__close {
+    @include m.flex-center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--clr-surface-hover);
+    border-radius: v.$radius-md;
+    cursor: pointer;
+    color: var(--clr-text-muted);
+    font-size: 1.1rem;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      background: var(--clr-danger-bg);
+      color: var(--clr-danger);
+    }
+  }
+
+  &__body {
+    @include m.flex-column;
+    gap: v.$spacing-md;
+    padding: v.$spacing-xl;
+  }
+
+  &__field {
+    @include m.flex-column;
+    gap: v.$spacing-xs;
+  }
+
+  &__label {
+    @include m.label-caps;
+  }
+
+  &__input,
+  &__select,
+  &__textarea {
+    @include m.input-base;
+  }
+
+  &__textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: v.$spacing-md;
+  }
+
+  &__read-only-box {
+    @include m.input-base;
+    background: var(--clr-bg-alt);
+    color: var(--clr-text-muted);
+    cursor: not-allowed;
+    border-style: dashed;
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-sm;
+
+    &::before {
+      content: '🔒';
+      font-size: 0.8rem;
+    }
+  }
+
+  &__footer {
+    @include m.flex-between;
+    padding: v.$spacing-lg v.$spacing-xl;
+    border-top: 1px solid var(--clr-border);
+    gap: v.$spacing-sm;
+  }
+
+  &__attachments {
+    @include m.flex-column;
+    gap: v.$spacing-sm;
+  }
+
+  &__attachment-preview {
+    display: flex;
+    gap: v.$spacing-md;
+    overflow-x: auto;
+    padding-bottom: v.$spacing-sm;
+    @include m.custom-scrollbar;
+  }
+
+  &__thumbnail {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: v.$radius-md;
+    border: 1px solid var(--clr-border);
+  }
+
+  &__upload-btn {
+    @include m.flex-center;
+    gap: v.$spacing-xs;
+    padding: v.$spacing-sm v.$spacing-md;
+    border: 1px dashed var(--clr-border);
+    border-radius: v.$radius-md;
+    background: transparent;
+    color: var(--clr-text-muted);
+    cursor: pointer;
+    font-size: v.$font-sm;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      border-color: var(--clr-primary);
+      color: var(--clr-primary);
+      background: var(--clr-primary-subtle);
+    }
+  }
+}
+
+// ── View Switcher ──
+.view-switcher {
+  @include m.flex-center;
+  gap: 0;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-md;
+  overflow: hidden;
+
+  &__btn {
+    @include m.flex-center;
+    gap: v.$spacing-xs;
+    padding: v.$spacing-sm v.$spacing-md;
+    border: none;
+    background: transparent;
+    color: var(--clr-text-muted);
+    font-size: v.$font-sm;
+    font-weight: v.$font-medium;
+    cursor: pointer;
+    transition: all v.$transition-fast;
+    @include m.focus-ring;
+
+    &--active {
+      background: var(--clr-primary);
+      color: #ffffff;
+    }
+
+    &:hover:not(&--active) {
+      background: var(--clr-surface-hover);
+      color: var(--clr-text);
+    }
+  }
+}
+
+.attachment-thumb {
+  @include m.flex-column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+  flex-shrink: 0;
+  position: relative;
+
+  &__name {
+    font-size: 0.65rem;
+    color: var(--clr-text-muted);
+    @include m.truncate;
+    width: 100%;
+    text-align: center;
+  }
+
+  &__remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    border-radius: v.$radius-full;
+    background: var(--clr-danger);
+    color: #fff;
+    border: 2px solid var(--clr-surface);
+    font-size: 10px;
+    @include m.flex-center;
+    cursor: pointer;
+    box-shadow: v.$shadow-sm;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      transform: scale(1.1);
+      background: #c0392b;
+    }
+  }
+}

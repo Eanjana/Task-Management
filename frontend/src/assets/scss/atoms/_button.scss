@@ -1,0 +1,92 @@
+// ═══════════════════════════════════════════
+// ATOM — BUTTONS
+// ═══════════════════════════════════════════
+
+@use '../helpers/variables' as v;
+@use '../helpers/mixins' as m;
+
+.btn {
+  @include m.flex-center;
+  gap: v.$spacing-sm;
+  padding: v.$spacing-sm v.$spacing-md;
+  font-size: v.$font-md;
+  font-weight: v.$font-medium;
+  font-family: inherit;
+  border: none;
+  border-radius: v.$radius-md;
+  cursor: pointer;
+  transition: all v.$transition-fast;
+  white-space: nowrap;
+  @include m.focus-ring;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // ── Variants ──
+  &--primary {
+    color: #ffffff;
+    background: var(--clr-primary);
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+
+    &:hover:not(:disabled) {
+      background: var(--clr-primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+  }
+
+  &--secondary {
+    color: var(--clr-text);
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+
+    &:hover:not(:disabled) {
+      background: var(--clr-surface-hover);
+      border-color: var(--clr-border-hover);
+    }
+  }
+
+  &--ghost {
+    color: var(--clr-text-secondary);
+    background: transparent;
+
+    &:hover:not(:disabled) {
+      background: var(--clr-primary-subtle);
+      color: var(--clr-primary);
+    }
+  }
+
+  &--danger {
+    color: var(--clr-danger);
+    background: var(--clr-danger-bg);
+
+    &:hover:not(:disabled) {
+      background: var(--clr-danger);
+      color: #ffffff;
+    }
+  }
+
+  &--icon {
+    padding: v.$spacing-sm;
+    width: 36px;
+    height: 36px;
+    border-radius: v.$radius-md;
+  }
+
+  // ── Sizes ──
+  &--sm {
+    padding: 4px v.$spacing-sm;
+    font-size: v.$font-xs;
+  }
+
+  &--lg {
+    padding: v.$spacing-md v.$spacing-lg;
+    font-size: v.$font-base;
+  }
+}

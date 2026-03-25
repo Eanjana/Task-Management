@@ -1,0 +1,79 @@
+// ═══════════════════════════════════════════
+// GLOBAL STYLES — Entry Point
+// ═══════════════════════════════════════════
+
+// 1. Helpers
+@use 'assets/scss/helpers/variables' as v;
+@use 'assets/scss/helpers/typography';
+@use 'assets/scss/helpers/animations';
+
+// 2. Themes
+@use 'assets/scss/themes/themes';
+
+// 3. Atoms
+@use 'assets/scss/atoms/button';
+@use 'assets/scss/atoms/theme-toggle';
+
+// 4. Organisms
+@use 'assets/scss/organisms/login';
+@use 'assets/scss/organisms/dashboard';
+
+// Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+
+// ── Global Reset ──
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  overflow-x: hidden;
+  transition: background v.$transition-smooth, color v.$transition-smooth;
+}
+
+.layout, .sidebar, .navbar, .content, .main {
+  transition: background v.$transition-smooth, border-color v.$transition-smooth, color v.$transition-smooth, box-shadow v.$transition-smooth;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+// ── Utility ──
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

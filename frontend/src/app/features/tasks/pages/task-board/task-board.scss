@@ -1,0 +1,170 @@
+@use '../../../../../assets/scss/helpers/variables' as v;
+@use '../../../../../assets/scss/helpers/mixins' as m;
+
+.kanban {
+  display: flex;
+  gap: v.$spacing-lg;
+  padding: v.$spacing-xl;
+  overflow-x: auto;
+  // Ensure the board fills available height
+  height: calc(100vh - v.$navbar-height - 64px - 48px); // Subtracting navbar + action bar height
+  @include m.custom-scrollbar;
+  align-items: flex-start;
+
+  &__column {
+    @include m.flex-column;
+    min-width: 300px;
+    max-width: 360px;
+    flex: 1;
+    background: var(--clr-surface-alt);
+    border-radius: v.$radius-lg;
+    border: 1px solid var(--clr-border);
+    max-height: 100%;
+    
+    &--todo { .kanban__column-header { border-top: 3px solid var(--clr-text-muted); } }
+    &--in-progress { .kanban__column-header { border-top: 3px solid var(--clr-info); } }
+    &--completed { .kanban__column-header { border-top: 3px solid var(--clr-success); } }
+  }
+
+  &__column-header {
+    @include m.flex-between;
+    padding: v.$spacing-md v.$spacing-lg;
+    background: var(--clr-surface);
+    border-bottom: 1px solid var(--clr-divider);
+  }
+
+  &__column-title {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    font-size: v.$font-sm;
+    font-weight: v.$font-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--clr-text);
+  }
+
+  &__count {
+    @include m.flex-center;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    font-weight: v.$font-bold;
+    background: var(--clr-primary-subtle);
+    color: var(--clr-primary);
+    border-radius: v.$radius-full;
+  }
+
+  &__cards {
+    @include m.flex-column;
+    gap: v.$spacing-md;
+    padding: v.$spacing-md;
+    flex: 1;
+    overflow-y: auto;
+    @include m.custom-scrollbar;
+    min-height: 100px; // Ensure drop target is visible
+
+    &--drag-over {
+      background: var(--clr-primary-subtle);
+      border-radius: v.$radius-md;
+      outline: 2px dashed var(--clr-primary);
+      outline-offset: -4px;
+    }
+  }
+}
+
+.task-card {
+  @include m.card;
+  padding: v.$spacing-md;
+  background: var(--clr-surface);
+  cursor: grab;
+  transition: all v.$transition-fast;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: v.$shadow-md;
+    border-color: var(--clr-primary);
+  }
+
+  &--dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+    transform: scale(0.95);
+  }
+
+  &__header {
+    @include m.flex-column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: v.$spacing-sm;
+    width: 100%;
+    position: relative;
+  }
+
+  &__id {
+    font-size: 10px;
+    color: var(--clr-text-muted);
+    font-weight: v.$font-semibold;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    font-size: v.$font-sm;
+    font-weight: v.$font-semibold;
+    color: var(--clr-text);
+    line-height: 1.4;
+    
+    &--completed {
+      text-decoration: line-through;
+      color: var(--clr-text-muted);
+    }
+  }
+
+  &__description {
+    font-size: 12px;
+    color: var(--clr-text-secondary);
+    margin-bottom: v.$spacing-md;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+
+  &__footer {
+    @include m.flex-between;
+    margin-top: auto;
+  }
+
+  &__tags {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+  }
+
+  &__menu {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    background: var(--clr-surface);
+    box-shadow: v.$shadow-sm;
+    padding: 2px;
+    border-radius: v.$radius-sm;
+    transition: opacity v.$transition-fast;
+
+    .task-card:hover & {
+      opacity: 1;
+    }
+  }
+}
+
+// ── Responsive ──
+@include m.respond-below(md) {
+  .kanban {
+    padding: v.$spacing-md;
+    &__column {
+      min-width: 280px;
+    }
+  }
+}

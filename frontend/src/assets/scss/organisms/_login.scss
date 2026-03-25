@@ -1,0 +1,134 @@
+// ═══════════════════════════════════════════
+// ORGANISM — LOGIN PAGE
+// ═══════════════════════════════════════════
+
+@use '../helpers/variables' as v;
+@use '../helpers/mixins' as m;
+
+.login {
+  @include m.flex-center;
+  min-height: 100vh;
+  background: var(--clr-bg);
+  position: relative;
+  overflow: hidden;
+
+  // Background gradient orbs
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.4;
+    z-index: 0;
+  }
+
+  &::before {
+    width: 500px;
+    height: 500px;
+    background: var(--clr-primary);
+    top: -150px;
+    right: -100px;
+    opacity: 0.15;
+  }
+
+  &::after {
+    width: 400px;
+    height: 400px;
+    background: var(--clr-success);
+    bottom: -100px;
+    left: -80px;
+    opacity: 0.1;
+  }
+
+  &__card {
+    @include m.glass;
+    @include m.flex-column;
+    width: 100%;
+    max-width: 420px;
+    padding: v.$spacing-2xl;
+    border-radius: v.$radius-xl;
+    z-index: 1;
+    animation: fadeInUp 500ms ease forwards;
+  }
+
+  &__logo {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    margin-bottom: v.$spacing-xl;
+
+    &-icon {
+      width: 44px;
+      height: 44px;
+      @include m.flex-center;
+      background: var(--clr-primary);
+      color: #ffffff;
+      border-radius: v.$radius-md;
+      font-size: 1.4rem;
+      font-weight: v.$font-bold;
+    }
+
+    &-text {
+      font-size: v.$font-xl;
+      font-weight: v.$font-bold;
+      color: var(--clr-text);
+    }
+  }
+
+  &__title {
+    text-align: center;
+    margin-bottom: v.$spacing-xs;
+    font-size: v.$font-2xl;
+  }
+
+  &__subtitle {
+    text-align: center;
+    color: var(--clr-text-muted);
+    margin-bottom: v.$spacing-xl;
+    font-size: v.$font-md;
+  }
+
+  &__form {
+    @include m.flex-column;
+    gap: v.$spacing-md;
+  }
+
+  &__field {
+    @include m.flex-column;
+    gap: v.$spacing-xs;
+  }
+
+  &__label {
+    @include m.label-caps;
+  }
+
+  &__input {
+    @include m.input-base;
+    padding: 12px v.$spacing-md;
+  }
+
+  &__error {
+    font-size: v.$font-xs;
+    color: var(--clr-danger);
+    min-height: 18px;
+    margin-top: v.$spacing-sm;
+  }
+
+  &__submit {
+    margin-top: v.$spacing-sm;
+    padding: 14px;
+    font-size: v.$font-base;
+    font-weight: v.$font-semibold;
+  }
+
+  &__footer {
+    text-align: center;
+    margin-top: v.$spacing-lg;
+    font-size: v.$font-sm;
+    color: var(--clr-text-muted);
+
+    a {
+      font-weight: v.$font-medium;
+    }
+  }
+}
