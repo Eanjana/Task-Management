@@ -2,7 +2,7 @@
 Authentication service layer.
 
 @description Handles user registration, login, and current user retrieval
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

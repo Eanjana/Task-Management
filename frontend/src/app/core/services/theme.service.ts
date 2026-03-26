@@ -1,6 +1,6 @@
 /**
  * @description Theme service for toggling light/dark theme
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { Injectable, signal } from '@angular/core';

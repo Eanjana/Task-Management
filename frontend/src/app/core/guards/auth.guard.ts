@@ -1,6 +1,6 @@
 /**
  * @description Functional auth guard that protects routes from unauthenticated access
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { CanActivateFn, Router } from '@angular/router';

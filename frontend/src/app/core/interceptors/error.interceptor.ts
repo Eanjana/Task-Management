@@ -1,6 +1,6 @@
 /**
  * @description Error interceptor that catches HTTP errors and shows toast notifications
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';

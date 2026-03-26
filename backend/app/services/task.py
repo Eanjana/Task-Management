@@ -2,7 +2,7 @@
 Task service layer.
 
 @description Handles CRUD operations for tasks
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

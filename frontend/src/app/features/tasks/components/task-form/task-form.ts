@@ -1,6 +1,6 @@
 /**
  * @description Task form modal component for creating and editing tasks
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import {

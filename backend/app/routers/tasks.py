@@ -2,7 +2,7 @@
 Task CRUD API router.
 
 @description Endpoints for creating, reading, updating, and deleting tasks
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

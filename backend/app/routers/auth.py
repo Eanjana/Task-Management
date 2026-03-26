@@ -2,7 +2,7 @@
 Authentication API router.
 
 @description Endpoints for user registration, login, and profile retrieval
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

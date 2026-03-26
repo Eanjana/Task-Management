@@ -1,6 +1,6 @@
 /**
  * @description Main layout component with sidebar, navbar, and router outlet
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';

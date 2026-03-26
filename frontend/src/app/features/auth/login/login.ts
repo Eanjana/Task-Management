@@ -1,6 +1,6 @@
 /**
  * @description Login page component with registration toggle
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';

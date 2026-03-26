@@ -1,6 +1,6 @@
 /**
  * @description Auth interceptor that attaches JWT token to outgoing requests
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { HttpInterceptorFn } from '@angular/common/http';

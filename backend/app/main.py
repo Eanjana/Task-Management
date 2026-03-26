@@ -2,7 +2,7 @@
 FastAPI application entry point.
 
 @description Main application factory with CORS, routes, static files, and startup events
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

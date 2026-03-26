@@ -2,7 +2,7 @@
 Task Pydantic schemas for request/response validation.
 
 @description Schemas for task CRUD operations
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

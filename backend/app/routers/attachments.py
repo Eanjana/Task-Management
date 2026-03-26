@@ -2,7 +2,7 @@
 Attachment upload API router.
 
 @description Endpoints for uploading and retrieving file attachments for tasks
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

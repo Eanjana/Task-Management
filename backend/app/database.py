@@ -2,7 +2,7 @@
 Database connection and session management.
 
 @description SQLAlchemy engine, session factory, and Base class
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

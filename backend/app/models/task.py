@@ -2,7 +2,7 @@
 Task database model.
 
 @description SQLAlchemy model for the tasks table with status and priority enums
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

@@ -1,6 +1,6 @@
 /**
  * @description Toast notification service for displaying user feedback messages
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 import { Injectable, signal } from '@angular/core';
@@ -9,7 +9,7 @@ export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface Toast {
   id: number;
-  message: string;
+  message: string;  
   type: ToastType;
 }
 

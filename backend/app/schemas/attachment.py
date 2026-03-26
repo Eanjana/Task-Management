@@ -2,7 +2,7 @@
 Attachment Pydantic schemas.
 
 @description Schemas for attachment API responses
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

@@ -2,7 +2,7 @@
 Application configuration loaded from environment variables.
 
 @description Pydantic Settings for FastAPI application configuration
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 

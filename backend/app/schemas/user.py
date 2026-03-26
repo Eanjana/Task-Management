@@ -2,7 +2,7 @@
 User Pydantic schemas for request/response validation.
 
 @description Schemas for user registration, login, and API responses
-@author Developer
+@author Anjana E
 @date 24-03-2026
 """
 
