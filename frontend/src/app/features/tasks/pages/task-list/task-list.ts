@@ -1,7 +1,7 @@
 /**
- * @description Task list page showing tasks grouped by status
+ * @description Task list page showing tasks in a professional data table
  * @author Anjana E
- * @date 24-03-2026
+ * @date 26-03-2026
  */
 import {
   Component,
@@ -15,6 +15,7 @@ import {
 import { TaskService } from '../../services/task.service';
 import { TaskFormComponent } from '../../components/task-form/task-form';
 import { TaskDetailsComponent } from '../../components/task-details/task-details';
+import { LogWorkDialogComponent } from '../../components/log-work-dialog/log-work-dialog';
 import { PRIORITY_LABELS, STATUS_LABELS, Task, TaskStatus } from '../../models/task.interface';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -24,7 +25,7 @@ import { FilterService } from '../../../../core/services/filter.service';
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [TaskFormComponent, TaskDetailsComponent],
+  imports: [TaskFormComponent, TaskDetailsComponent, LogWorkDialogComponent],
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,19 +33,23 @@ import { FilterService } from '../../../../core/services/filter.service';
 export class TaskListComponent implements OnInit {
   protected taskService = inject(TaskService);
   private toast = inject(ToastService);
-  protected authService = inject(AuthService); // Changed to protected/inject
+  protected authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
   protected showDetails = signal(false);
+  protected hideCompleted = signal(false);
   protected editingTask = signal<Task | null>(null);
   protected detailsTask = signal<Task | null>(null);
+  protected logWorkTask = signal<Task | null>(null);
+  protected activeMenuId = signal<number | null>(null);
+  protected confirmDeleteTask = signal<Task | null>(null);
+  protected isBulkDeleting = signal(false);
 
   protected readonly statusLabels = STATUS_LABELS;
   protected readonly priorityLabels = PRIORITY_LABELS;
   protected readonly statuses: TaskStatus[] = ['todo', 'in_progress', 'completed'];
 
   protected selectedTaskIds = signal<Set<number>>(new Set());
-
   protected filterService = inject(FilterService);
 
   /** Computed filtered tasks for the table template */
@@ -52,29 +57,30 @@ export class TaskListComponent implements OnInit {
     let allTasks = this.taskService.tasks();
     const filters = this.filterService.filters();
 
+    if (this.hideCompleted()) {
+      allTasks = allTasks.filter(t => t.status !== 'completed');
+    }
+
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
       allTasks = allTasks.filter(
         (t) =>
           t.title.toLowerCase().includes(q) ||
-          (t.team && t.team.toLowerCase().includes(q)) ||
-          STATUS_LABELS[t.status].toLowerCase().includes(q) ||
-          PRIORITY_LABELS[t.priority].toLowerCase().includes(q)
+          (t.team && t.team.toLowerCase().includes(q))
       );
     }
+
     if (filters.criticality) {
       allTasks = allTasks.filter(
-        (t) =>
-          PRIORITY_LABELS[t.priority]?.toLowerCase() ===
-          filters.criticality.toLowerCase()
+        (t) => PRIORITY_LABELS[t.priority]?.toLowerCase() === filters.criticality.toLowerCase()
       );
     }
+
     if (filters.team) {
-      const q = filters.team.toLowerCase().replace(/\s/g, '');
-      allTasks = allTasks.filter((t) => 
-        t.team?.toLowerCase().replace(/\s/g, '').includes(q)
-      );
+      const q = filters.team.toLowerCase().trim();
+      allTasks = allTasks.filter((t) => t.team?.toLowerCase().includes(q));
     }
+
     if (filters.assignee) {
       if (filters.assignee === 'Me') {
         const currentUser = this.authService.currentUser();
@@ -85,14 +91,28 @@ export class TaskListComponent implements OnInit {
         allTasks = allTasks.filter((t) => !t.assignee);
       } else {
         const a = filters.assignee.toLowerCase();
-        allTasks = allTasks.filter((t) =>
-          t.assignee?.username.toLowerCase().includes(a)
-        );
+        allTasks = allTasks.filter((t) => t.assignee?.username.toLowerCase().includes(a));
       }
+    }
+
+    // Date filtering
+    if (filters.date) {
+      allTasks = allTasks.filter(t => {
+        try {
+          const createdStr = new Date(t.created_at).toISOString().split('T')[0];
+          return createdStr === filters.date;
+        } catch {
+          return false;
+        }
+      });
     }
 
     return allTasks;
   });
+
+  ngOnInit(): void {
+    this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
 
   toggleAllSelections(): void {
     const allIds = this.filteredTasks().map((t) => t.id);
@@ -102,6 +122,33 @@ export class TaskListComponent implements OnInit {
     } else {
       this.selectedTaskIds.set(new Set(allIds));
     }
+  }
+
+  deleteSelectedTasks(): void {
+    if (this.selectedTaskIds().size > 0) {
+      this.isBulkDeleting.set(true);
+    }
+  }
+
+  onConfirmBulkDelete(): void {
+    const ids = Array.from(this.selectedTaskIds());
+    let deletedCount = 0;
+    ids.forEach(id => {
+      this.taskService.deleteTask(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          deletedCount++;
+          if (deletedCount === ids.length) {
+            this.toast.success(`${deletedCount} tasks deleted`);
+            this.selectedTaskIds.set(new Set());
+            this.isBulkDeleting.set(false);
+          }
+        },
+        error: () => {
+          // Error handled by global interceptor
+          this.isBulkDeleting.set(false); // Ensure dialog closes on error too
+        },
+      });
+    });
   }
 
   toggleTaskSelection(id: number, event: Event): void {
@@ -115,60 +162,36 @@ export class TaskListComponent implements OnInit {
     this.selectedTaskIds.set(current);
   }
 
-  deleteSelectedTasks(): void {
-    const ids = Array.from(this.selectedTaskIds());
-    if (ids.length === 0) return;
-
-    if (confirm(`Are you sure you want to delete ${ids.length} tasks?`)) {
-      let deletedCount = 0;
-      let hasError = false;
-
-      ids.forEach((id) => {
-        this.taskService
-          .deleteTask(id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: () => {
-              deletedCount++;
-              if (deletedCount === ids.length) {
-                this.toast.success(`${deletedCount} tasks deleted`);
-                this.selectedTaskIds.set(new Set());
-              }
-            },
-            error: () => {
-              if (!hasError) {
-                this.toast.error('Failed to delete some tasks');
-                hasError = true;
-              }
-            },
-          });
-      });
-    }
+  toggleMenu(id: number, event: Event): void {
+    event.stopPropagation();
+    this.activeMenuId.set(this.activeMenuId() === id ? null : id);
   }
 
-  ngOnInit(): void {
-    this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  closeMenus(): void {
+    this.activeMenuId.set(null);
   }
 
-  /**
-   * @description Open the create task modal
-   */
   openCreateModal(): void {
     this.editingTask.set(null);
     this.filterService.showCreateTaskModal.set(true);
   }
 
-  /**
-   * @description Open the edit task modal
-   */
   openEditModal(task: Task): void {
     this.editingTask.set(task);
     this.filterService.showCreateTaskModal.set(true);
+    this.closeMenus();
   }
 
-  /**
-   * @description Close the task form modal
-   */
+  openLogWorkModal(task: Task): void {
+    this.logWorkTask.set(task);
+    this.closeMenus();
+  }
+
+  closeLogWorkModal(): void {
+    this.logWorkTask.set(null);
+    this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
+
   closeForm(): void {
     this.filterService.showCreateTaskModal.set(false);
     this.editingTask.set(null);
@@ -190,43 +213,41 @@ export class TaskListComponent implements OnInit {
   }
 
   onDetailsDelete(task: Task): void {
-    if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+    this.confirmDeleteTask.set(task);
+  }
+
+  onConfirmDelete(): void {
+    const task = this.confirmDeleteTask();
+    if (task) {
       this.taskService.deleteTask(task.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.toast.success('Task deleted successfully');
+          this.confirmDeleteTask.set(null);
           this.closeDetailsModal();
+          this.closeMenus();
         },
-        error: () => this.toast.error('Failed to delete task'),
+        error: () => {
+          // Error already handled by global interceptor
+          this.confirmDeleteTask.set(null); // Ensure dialog closes on error too
+        },
       });
     }
   }
 
-  /**
-   * @description Handle form save — reload tasks
-   */
+  cancelDelete(): void {
+    this.confirmDeleteTask.set(null);
+    this.isBulkDeleting.set(false);
+  }
+
   onFormSaved(): void {
     this.closeForm();
     this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
-  /**
-   * @description Delete a task with confirmation
-   */
-  deleteTask(task: Task, event: MouseEvent): void {
-    event.stopPropagation();
-    if (confirm(`Delete "${task.title}"?`)) {
-      this.taskService
-        .deleteTask(task.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => this.toast.success('Task deleted'),
-        });
-    }
+  deleteTask(task: Task): void {
+    this.confirmDeleteTask.set(task);
   }
 
-  /**
-   * @description Format minutes into human-readable time
-   */
   formatTime(minutes: number): string {
     if (minutes === 0) return '—';
     const h = Math.floor(minutes / 60);
@@ -236,11 +257,33 @@ export class TaskListComponent implements OnInit {
     return `${m}m`;
   }
 
-  /**
-   * @description Get user initials for avatar
-   */
-  getInitials(name: string | undefined): string {
-    if (!name) return '?';
-    return name.charAt(0).toUpperCase();
+  getPerformanceInfo(task: Task): { color: string, icon: string, label: string, diffText: string } | null {
+    if (task.status !== 'completed' || task.assigned_time_minutes === 0) return null;
+    
+    const diff = (task.total_time_spent_minutes || 0) - (task.assigned_time_minutes || 0);
+    const threshold = task.assigned_time_minutes * 0.1;
+
+    if (diff < -threshold) { 
+        return { 
+          color: 'success', 
+          icon: '↑', 
+          label: 'Ahead of schedule',
+          diffText: this.formatTime(Math.abs(diff)) 
+        }; 
+    }
+    if (diff > threshold) { 
+        return { 
+          color: 'danger', 
+          icon: '↓', 
+          label: 'Behind schedule',
+          diffText: this.formatTime(diff) 
+        }; 
+    }
+    return { 
+      color: 'warning', 
+      icon: '→', 
+      label: 'On track',
+      diffText: ''
+    };
   }
 }

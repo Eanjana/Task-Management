@@ -3,75 +3,98 @@
     <h2 class="action-bar-title">{{ pageTitle() }}</h2>
   </div>
   <div class="action-bar">
-  <!-- Left Side: Search & Filters -->
-  <div class="action-bar__filters">
-    <div class="action-bar__search">
-      <svg class="action-bar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input 
-        type="text" 
-        class="action-bar__search-input" 
-        placeholder="Search tasks, teams..." 
-        [ngModel]="filterService.filters().searchQuery" 
-        (ngModelChange)="onSearchChange($event)"
-      >
+    <!-- Left Side: Search & Filters -->
+    <div class="action-bar__filters">
+      <div class="action-bar__search">
+        <svg class="action-bar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input 
+          type="text" 
+          class="action-bar__search-input" 
+          placeholder="Search tasks, teams..." 
+          [ngModel]="filterService.filters().searchQuery" 
+          (ngModelChange)="onSearchChange($event)"
+        >
+      </div>
+
+      <div class="action-bar__filter-group" (click)="$event.stopPropagation()">
+        <!-- Team Dropdown -->
+        <div class="premium-dropdown" [class.premium-dropdown--active]="activeDropdown() === 'team'">
+          <button class="premium-dropdown__trigger" (click)="toggleDropdown('team', $event)">
+            <span>{{ filterService.filters().team || 'All Teams' }}</span>
+            <svg class="premium-dropdown__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          @if (activeDropdown() === 'team') {
+            <div class="premium-dropdown__menu animate-fade-in animate-scale-in">
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', '')" [class.premium-dropdown__item--active]="!filterService.filters().team">All Teams</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Frontend')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Frontend'">Frontend</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Backend')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Backend'">Backend</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Design')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Design'">Design</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Compliance')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Compliance'">Compliance</button>
+            </div>
+          }
+        </div>
+
+        <!-- Criticality Dropdown -->
+        <div class="premium-dropdown" [class.premium-dropdown--active]="activeDropdown() === 'criticality'">
+          <button class="premium-dropdown__trigger" (click)="toggleDropdown('criticality', $event)">
+            <span>{{ filterService.filters().criticality || 'Criticality' }}</span>
+            <svg class="premium-dropdown__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          @if (activeDropdown() === 'criticality') {
+            <div class="premium-dropdown__menu animate-fade-in animate-scale-in">
+              <button class="premium-dropdown__item" (click)="onFilterChange('criticality', '')" [class.premium-dropdown__item--active]="!filterService.filters().criticality">Criticality</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('criticality', 'Low')" [class.premium-dropdown__item--active]="filterService.filters().criticality === 'Low'">Low</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('criticality', 'Normal')" [class.premium-dropdown__item--active]="filterService.filters().criticality === 'Normal'">Normal</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('criticality', 'High')" [class.premium-dropdown__item--active]="filterService.filters().criticality === 'High'">High</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('criticality', 'Urgent')" [class.premium-dropdown__item--active]="filterService.filters().criticality === 'Urgent'">Urgent</button>
+            </div>
+          }
+        </div>
+
+        <!-- Assignee Dropdown -->
+        <div class="premium-dropdown" [class.premium-dropdown--active]="activeDropdown() === 'assignee'">
+          <button class="premium-dropdown__trigger" (click)="toggleDropdown('assignee', $event)">
+            <span>{{ filterService.filters().assignee || 'Assignee' }}</span>
+            <svg class="premium-dropdown__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          @if (activeDropdown() === 'assignee') {
+            <div class="premium-dropdown__menu animate-fade-in animate-scale-in">
+              <button class="premium-dropdown__item" (click)="onFilterChange('assignee', '')" [class.premium-dropdown__item--active]="!filterService.filters().assignee">Assignee</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('assignee', 'Me')" [class.premium-dropdown__item--active]="filterService.filters().assignee === 'Me'">Me</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('assignee', 'Unassigned')" [class.premium-dropdown__item--active]="filterService.filters().assignee === 'Unassigned'">Unassigned</button>
+            </div>
+          }
+        </div>
+
+        <div class="action-bar__date-range">
+          <input 
+            type="date" 
+            class="action-bar__date-input" 
+            [ngModel]="filterService.filters().date" 
+            (ngModelChange)="onFilterChange('date', $event)"
+            aria-label="Created date"
+          >
+        </div>
+      </div>
     </div>
 
-    <div class="action-bar__filter-group">
-      <select 
-        class="action-bar__select" 
-        [ngModel]="filterService.filters().team" 
-        (ngModelChange)="onFilterChange('team', $event)"
-        aria-label="Filter by team"
-      >
-        <option value="">All Teams ⌄</option>
-        <option value="Frontend">Frontend</option>
-        <option value="Backend">Backend</option>
-        <option value="Design">Design</option>
-        <option value="Compliance">Compliance</option>
-      </select>
+    <!-- Right Side: Views & Actions -->
+    <div class="action-bar__actions">
+      <div class="action-bar__views">
+          <a class="action-bar__view-btn" routerLink="/tasks" routerLinkActive="action-bar__view-btn--active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            List
+          </a>
+          <a class="action-bar__view-btn" routerLink="/board" routerLinkActive="action-bar__view-btn--active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Board
+          </a>
+      </div>
 
-      <select 
-        class="action-bar__select" 
-        [ngModel]="filterService.filters().criticality" 
-        (ngModelChange)="onFilterChange('criticality', $event)"
-        aria-label="Filter by criticality"
-      >
-        <option value="">Criticality ⌄</option>
-        <option value="Low">Low</option>
-        <option value="Normal">Normal</option>
-        <option value="High">High</option>
-        <option value="Urgent">Urgent</option>
-      </select>
-
-      <select 
-        class="action-bar__select" 
-        [ngModel]="filterService.filters().assignee" 
-        (ngModelChange)="onFilterChange('assignee', $event)"
-        aria-label="Filter by assignee"
-      >
-        <option value="">Assignee ⌄</option>
-        <option value="Me">Me</option>
-        <option value="Unassigned">Unassigned</option>
-      </select>
+      <button class="btn btn--primary btn--sm action-bar__create-btn" (click)="openCreateModal()" type="button">
+        <span>Create Task</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
-  </div>
-
-  <!-- Right Side: Views & Actions -->
-  <div class="action-bar__actions">
-    <div class="action-bar__views">
-        <a class="action-bar__view-btn" routerLink="/tasks" routerLinkActive="action-bar__view-btn--active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          List
-        </a>
-        <a class="action-bar__view-btn" routerLink="/board" routerLinkActive="action-bar__view-btn--active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Board
-        </a>
-    </div>
-
-    <button class="btn btn--primary btn--sm action-bar__create-btn" (click)="openCreateModal()" type="button">
-      <span>Create Task</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </button>
   </div>
 </div>

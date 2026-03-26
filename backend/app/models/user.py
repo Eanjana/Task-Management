@@ -24,4 +24,4 @@ class User(Base):
     avatar_url = Column(String(255), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    tasks = relationship("Task", back_populates="assignee", lazy="selectin")
+    tasks = relationship("Task", foreign_keys="[Task.assignee_id]", back_populates="assignee", lazy="selectin")

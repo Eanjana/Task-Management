@@ -48,9 +48,9 @@
     &-input {
       @include m.input-base;
       padding-left: 36px;
-      height: 36px;
-      font-size: 0.85rem;
-      border-radius: v.$radius-md;
+      height: 38px;
+      font-size: 13px;
+      border-radius: 8px;
       background: var(--clr-surface-alt);
       border: 1px solid var(--clr-border);
       transition: all v.$transition-fast;
@@ -76,27 +76,116 @@
     padding-left: v.$spacing-lg;
   }
 
-  &__select {
-    appearance: none;
-    background: transparent;
-    border: none;
-    color: var(--clr-text-secondary);
-    font-size: 0.8rem;
-    font-weight: v.$font-semibold;
-    cursor: pointer;
-    transition: all v.$transition-fast;
-    padding: v.$spacing-xs v.$spacing-sm;
-    border-radius: v.$radius-sm;
-    
-    &:hover {
-      color: var(--clr-primary);
-      background: var(--clr-surface-hover);
+  // ── Premium Dropdowns ──
+  .premium-dropdown {
+    position: relative;
+    user-select: none;
+
+    &__trigger {
+      @include m.flex-center;
+      gap: v.$spacing-sm;
+      background: var(--clr-surface-alt);
+      border: 1px solid var(--clr-border);
+      color: var(--clr-text-secondary);
+      padding: 6px 14px;
+      height: 38px;
+      border-radius: 8px;
+      font-size: 13px;
+      min-width: 120px;
+      justify-content: space-between;
+
+      &:hover {
+        background: var(--clr-surface);
+        border-color: var(--clr-primary-alpha);
+        color: var(--clr-primary);
+        box-shadow: v.$shadow-sm;
+      }
+
+      svg {
+        opacity: 0.6;
+        transition: transform v.$transition-fast;
+      }
     }
 
+    &--active &__trigger {
+      background: var(--clr-surface);
+      border-color: var(--clr-primary);
+      color: var(--clr-primary);
+      box-shadow: 0 0 0 3px rgba(var(--clr-primary-rgb), 0.08);
+
+      svg {
+        transform: rotate(180deg);
+        opacity: 1;
+      }
+    }
+
+    &__menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 180px;
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: v.$radius-lg;
+      box-shadow: v.$shadow-xl;
+      padding: v.$spacing-xs;
+      z-index: 1000;
+      transform-origin: top left;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(var(--clr-primary-rgb), 0.1);
+    }
+
+    &__item {
+      @include m.flex-center;
+      justify-content: flex-start;
+      width: 100%;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      border-radius: v.$radius-sm;
+      color: var(--clr-text-secondary);
+      font-size: 0.8rem;
+      font-weight: v.$font-medium;
+      cursor: pointer;
+      transition: all v.$transition-fast;
+
+      &:hover {
+        background: var(--clr-surface-hover);
+        color: var(--clr-text);
+        padding-left: 16px;
+      }
+
+      &--active {
+        background: var(--clr-primary-subtle);
+        color: var(--clr-primary);
+        font-weight: v.$font-bold;
+      }
+    }
+  }
+
+  &__date-range {
+    @include m.flex-center;
+    gap: v.$spacing-xs;
+  }
+
+  &__date-sep {
+    font-size: v.$font-xs;
+    color: var(--clr-text-muted);
+  }
+
+  &__date-input {
+    @include m.input-base;
+    height: 38px;
+    width: 140px;
+    font-size: 13px;
+    padding: 0 v.$spacing-md;
+    border-radius: 8px;
+    background: var(--clr-surface-alt);
+    border: 1px solid var(--clr-border);
+
     &:focus {
-      outline: none;
-      color: var(--clr-text);
-      background: var(--clr-surface-hover);
+      border-color: var(--clr-primary);
+      background: var(--clr-surface);
     }
   }
 
@@ -110,21 +199,23 @@
     @include m.flex-center;
     gap: 4px;
     background: var(--clr-surface-alt);
-    padding: 4px;
-    border-radius: v.$radius-lg;
+    padding: 3px;
+    border-radius: 8px;
     border: 1px solid var(--clr-border);
     box-shadow: inset v.$shadow-sm;
+    height: 38px;
   }
 
   &__view-btn {
     @include m.flex-center;
     gap: 8px;
-    padding: 6px 14px;
+    padding: 0 14px;
+    height: 32px;
     font-size: 0.8rem;
     font-weight: v.$font-semibold;
     color: var(--clr-text-muted);
     text-decoration: none;
-    border-radius: v.$radius-md;
+    border-radius: 6px;
     transition: all v.$transition-fast;
 
     svg {
@@ -148,7 +239,10 @@
   &__create-btn {
     @include m.flex-center;
     gap: v.$spacing-sm;
-    padding: v.$spacing-sm v.$spacing-lg;
+    height: 38px;
+    padding: 0 v.$spacing-xl;
+    font-size: 14px;
+    border-radius: 8px;
     font-weight: v.$font-bold;
     letter-spacing: 0.3px;
     white-space: nowrap;

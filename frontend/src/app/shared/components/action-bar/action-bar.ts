@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed, signal } from '@angular/core';
 import { FilterService, FilterState } from '../../../core/services/filter.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, NavigationEnd } from '@angular/router';
@@ -33,12 +33,24 @@ export class ActionBarComponent {
     return 'Developments';
   });
 
+  protected activeDropdown = signal<'team' | 'criticality' | 'assignee' | null>(null);
+
+  toggleDropdown(name: 'team' | 'criticality' | 'assignee', event: Event): void {
+    event.stopPropagation();
+    this.activeDropdown.update((curr) => (curr === name ? null : name));
+  }
+
+  closeDropdowns(): void {
+    this.activeDropdown.set(null);
+  }
+
   onSearchChange(value: string): void {
     this.filterService.updateFilter('searchQuery', value);
   }
 
   onFilterChange(key: keyof FilterState, value: string): void {
     this.filterService.updateFilter(key, value);
+    this.closeDropdowns();
   }
 
   openCreateModal(): void {

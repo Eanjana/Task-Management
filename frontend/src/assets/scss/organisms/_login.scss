@@ -105,13 +105,48 @@
   &__input {
     @include m.input-base;
     padding: 12px v.$spacing-md;
+
+    &--with-icon { padding-left: 40px; }
+  }
+
+  &__input-wrapper {
+    position: relative;
+    @include m.flex-center;
+  }
+
+  &__input-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--clr-text-muted);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &__eye-btn {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--clr-text-muted);
+    @include m.flex-center;
+    padding: 4px;
+    border-radius: v.$radius-sm;
+
+    &:hover { color: var(--clr-text); }
+    @include m.focus-ring;
   }
 
   &__error {
+    @include m.flex-center;
+    justify-content: flex-start;
+    gap: v.$spacing-xs;
     font-size: v.$font-xs;
     color: var(--clr-danger);
-    min-height: 18px;
-    margin-top: v.$spacing-sm;
+    background: var(--clr-danger-bg);
+    padding: v.$spacing-sm v.$spacing-md;
+    border-radius: v.$radius-md;
+    margin-top: v.$spacing-xs;
   }
 
   &__submit {
@@ -127,8 +162,6 @@
     font-size: v.$font-sm;
     color: var(--clr-text-muted);
 
-    a {
-      font-weight: v.$font-medium;
-    }
+    a { font-weight: v.$font-medium; }
   }
 }

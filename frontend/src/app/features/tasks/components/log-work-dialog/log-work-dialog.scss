@@ -1,0 +1,275 @@
+@use 'assets/scss/helpers/variables' as v;
+@use 'assets/scss/helpers/mixins' as m;
+
+.log-work {
+  &__backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    @include m.flex-center;
+    z-index: v.$z-modal-backdrop;
+    padding: v.$spacing-md;
+  }
+
+  &__dialog {
+    @include m.card;
+    width: 100%;
+    max-width: 600px;
+    background: var(--clr-surface);
+    box-shadow: v.$shadow-xl;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    border: 1px solid var(--clr-glass-border);
+  }
+
+  &__header {
+    @include m.flex-between;
+    padding: v.$spacing-lg;
+    background: var(--clr-surface);
+    border-bottom: 1px solid var(--clr-border);
+    @include m.glass;
+  }
+
+  &__header-left {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+  }
+
+  &__header-icon {
+    color: var(--clr-primary);
+  }
+
+  &__title {
+    font-size: v.$font-lg;
+    font-weight: v.$font-bold;
+    color: var(--clr-text);
+    margin: 0;
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    color: var(--clr-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: v.$radius-sm;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      background: var(--clr-surface-hover);
+      color: var(--clr-danger);
+    }
+  }
+
+  &__task-info {
+    padding: v.$spacing-md v.$spacing-lg;
+    background: var(--clr-surface-hover);
+    border-bottom: 1px solid var(--clr-divider);
+    @include m.flex-between;
+    align-items: center;
+  }
+
+  &__task-header {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-sm;
+  }
+
+  &__task-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: v.$font-xs;
+    background: var(--clr-surface);
+    padding: 2px 8px;
+    border-radius: v.$radius-sm;
+    border: 1px solid var(--clr-border);
+  }
+
+  &__meta-label {
+    color: var(--clr-text-muted);
+    font-weight: v.$font-medium;
+  }
+
+  &__meta-value {
+    color: var(--clr-text);
+    font-weight: v.$font-bold;
+  }
+
+  &__task-id {
+    font-size: v.$font-xs;
+    font-weight: v.$font-bold;
+    background: var(--clr-primary-subtle);
+    color: var(--clr-primary);
+    padding: 2px 8px;
+    border-radius: v.$radius-sm;
+    text-transform: uppercase;
+  }
+
+  &__task-title {
+    font-size: v.$font-sm;
+    font-weight: v.$font-medium;
+    color: var(--clr-text-secondary);
+    @include m.truncate;
+  }
+
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: v.$spacing-lg;
+    @include m.flex-column;
+    gap: v.$spacing-xl;
+    @include m.custom-scrollbar;
+  }
+
+  &__entry {
+    @include m.flex-column;
+    gap: v.$spacing-md;
+    padding: v.$spacing-lg;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: v.$radius-lg;
+    transition: all v.$transition-base;
+
+    &:hover {
+      border-color: var(--clr-primary-alpha);
+      box-shadow: v.$shadow-sm;
+    }
+  }
+
+  &__entry-header {
+    @include m.flex-between;
+  }
+
+  &__entry-number {
+    @include m.flex-center;
+    gap: v.$spacing-xs;
+    font-size: v.$font-xs;
+    font-weight: v.$font-bold;
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    svg {
+      color: var(--clr-primary);
+      opacity: 0.7;
+    }
+  }
+
+  &__remove-btn {
+    background: transparent;
+    border: none;
+    color: var(--clr-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: v.$radius-sm;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      color: var(--clr-danger);
+      background: var(--clr-danger-bg);
+    }
+  }
+
+  &__time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: v.$spacing-md;
+    align-items: flex-end;
+  }
+
+  &__field {
+    @include m.flex-column;
+    gap: v.$spacing-xs;
+  }
+
+  &__label {
+    @include m.flex-center;
+    justify-content: flex-start;
+    gap: v.$spacing-xs;
+    @include m.label-caps;
+    font-size: 10px;
+  }
+
+  &__input {
+    @include m.input-base;
+    padding: v.$spacing-sm;
+    font-size: v.$font-sm;
+  }
+
+  &__duration {
+    font-size: v.$font-sm;
+    font-weight: v.$font-bold;
+    color: var(--clr-primary);
+    background: var(--clr-primary-subtle);
+    padding: v.$spacing-sm v.$spacing-md;
+    border-radius: v.$radius-md;
+    min-width: 60px;
+    text-align: center;
+    border: 1px solid var(--clr-primary-alpha);
+  }
+
+  &__textarea {
+    @include m.input-base;
+    resize: none;
+    font-size: v.$font-sm;
+    padding: v.$spacing-sm v.$spacing-md;
+  }
+
+  &__add-btn {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    background: transparent;
+    border: 1px dashed var(--clr-border);
+    color: var(--clr-text-secondary);
+    padding: v.$spacing-md;
+    border-radius: v.$radius-lg;
+    cursor: pointer;
+    font-size: v.$font-sm;
+    font-weight: v.$font-medium;
+    transition: all v.$transition-base;
+
+    &:hover {
+      background: var(--clr-surface-hover);
+      border-color: var(--clr-primary);
+      color: var(--clr-primary);
+    }
+  }
+
+  &__footer {
+    padding: v.$spacing-lg;
+    background: var(--clr-surface);
+    border-top: 1px solid var(--clr-border);
+    @include m.flex-between;
+    @include m.glass;
+  }
+
+  &__total {
+    @include m.flex-center;
+    gap: v.$spacing-sm;
+    color: var(--clr-text);
+  }
+
+  &__total-label {
+    font-size: v.$font-sm;
+    font-weight: v.$font-semibold;
+    color: var(--clr-text-muted);
+  }
+
+  &__total-value {
+    font-size: v.$font-lg;
+    font-weight: v.$font-bold;
+    color: var(--clr-primary);
+  }
+
+  &__footer-actions {
+    display: flex;
+    gap: v.$spacing-md;
+  }
+}

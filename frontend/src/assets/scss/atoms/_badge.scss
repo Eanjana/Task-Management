@@ -13,6 +13,9 @@
   white-space: nowrap;
   letter-spacing: 0.2px;
   text-transform: capitalize;
+  min-width: 90px;
+  justify-content: center;
+  text-align: center;
 
   &--dot::before {
     content: '';

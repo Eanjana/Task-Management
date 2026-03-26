@@ -1,12 +1,32 @@
-<section class="task-list" aria-label="Task list view">
+<section class="task-list-view" aria-label="Task list view" (click)="closeMenus()">
+
+  <div class="task-list__controls">
+    <div class="task-list__count-info">
+      Showing <strong>{{ filteredTasks().length }}</strong> tasks
+    </div>
+    <div class="task-list__toggles">
+      <label class="toggle-switch">
+        <input type="checkbox" [checked]="hideCompleted()" (change)="hideCompleted.set(!hideCompleted())">
+        <span class="toggle-switch__slider"></span>
+        <span class="toggle-switch__label">Hide Completed</span>
+      </label>
+      
+      @if (selectedTaskIds().size > 0) {
+        <button class="btn btn--danger btn--xs animate-slide-in" (click)="deleteSelectedTasks()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete ({{ selectedTaskIds().size }})
+        </button>
+      }
+    </div>
+  </div>
 
   @if (taskService.isLoading()) {
     <div class="task-list__loading" aria-live="polite">
-      <span class="animate-spin" aria-hidden="true">⟳</span>
-      Loading tasks...
+      <div class="loader"></div>
+      <p>Refreshing tasks...</p>
     </div>
   } @else {
-    <div class="task-table-container">
+    <div class="task-table-container custom-scrollbar">
       <table class="task-table">
         <thead>
           <tr>
@@ -18,94 +38,138 @@
                 (change)="toggleAllSelections()"
               />
             </th>
-            <th class="task-table__th">
-              @if (selectedTaskIds().size > 0) {
-                <button class="btn btn--danger btn--xs" (click)="deleteSelectedTasks()">
-                  🗑 Delete Selected ({{ selectedTaskIds().size }})
-                </button>
-              } @else {
-                Task ID
-              }
-            </th>
-            <th class="task-table__th">Task Name</th>
+            <th class="task-table__th task-table__th--id">ID</th>
+            <th class="task-table__th task-table__th--title">Task Title</th>
             <th class="task-table__th">Team</th>
-            <th class="task-table__th">Criticality</th>
+            <th class="task-table__th">Priority</th>
             <th class="task-table__th">Status</th>
             <th class="task-table__th">Assignee</th>
+            <th class="task-table__th">Performance</th>
+            <th class="task-table__th task-table__th--actions"></th>
           </tr>
         </thead>
         <tbody>
           @for (task of filteredTasks(); track task.id) {
             <tr 
-              class="task-table__row animate-fade-in-up" 
+              class="task-table__row animate-fade-in" 
               [class.task-table__row--selected]="selectedTaskIds().has(task.id)"
+              (click)="openDetailsModal(task)"
+              tabindex="0"
+              (keydown.enter)="openDetailsModal(task)"
+              [attr.aria-label]="'View task ' + task.id"
             >
-              <td class="task-table__cell task-table__cell--checkbox">
+              <td class="task-table__cell task-table__cell--checkbox" (click)="$event.stopPropagation()">
                 <input 
                   type="checkbox" 
                   [attr.aria-label]="'Select task ' + task.id" 
                   [checked]="selectedTaskIds().has(task.id)"
                   (change)="toggleTaskSelection(task.id, $event)"
+                  (keydown.enter)="toggleTaskSelection(task.id, $event); $event.preventDefault()"
                 />
               </td>
               
               <td class="task-table__cell">
-                <a 
-                  href="javascript:void(0)" 
-                  class="task-table__link" 
-                  (click)="openDetailsModal(task); $event.preventDefault()"
-                >
+                <button class="task-table__id-link" (click)="$event.stopPropagation(); openDetailsModal(task)" type="button" [attr.aria-label]="'Task ID TS-' + task.id">
                   TS-{{ task.id }}
-                </a>
+                </button>
               </td>
               
-              <td class="task-table__cell task-table__cell--title" (click)="openDetailsModal(task)">
-                <div class="task-table__title-wrapper">
-                  {{ task.title }}
+              <td class="task-table__cell task-table__cell--title">
+                <div class="task-table__title-content">
+                  <span class="task-table__title-text">
+                    {{ task.title }}
+                  </span>
                   @if (task.attachments.length) {
-                    <div class="attachment-tag" title="Has attachments">
-                      <span class="attachment-tag__icon">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                      </span>
-                      {{ task.attachments.length }}
+                    <div class="task-table__attachment-badge" title="Has attachments">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      <span>{{ task.attachments.length }}</span>
                     </div>
                   }
                 </div>
               </td>
               
-              <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <span class="task-table__team">{{ task.team || 'No Team' }}</span>
+              <td class="task-table__cell">
+                <span class="task-table__team-tag">{{ task.team || 'Unassigned' }}</span>
               </td>
               
-              <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <span class="badge badge--dot badge--{{ task.priority }}">
+              <td class="task-table__cell">
+                <span class="badge badge--priority badge--{{ task.priority }}">
                   {{ priorityLabels[task.priority] }}
                 </span>
               </td>
               
-              <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <span class="badge badge--{{ task.status }}">
+              <td class="task-table__cell">
+                <span class="badge badge--status badge--{{ task.status }}">
                   {{ statusLabels[task.status] }}
                 </span>
               </td>
               
-              <td class="task-table__cell" (click)="openDetailsModal(task)">
-                <div class="task-table__assignee">
-                  @if (task.assignee) {
-                    <span class="task-row__avatar" [title]="task.assignee.username" [style.background-color]="'#0052cc'">
-                      {{ getInitials(task.assignee.username) }}
+              <td class="task-table__cell">
+                @if (task.assignee) {
+                  <div class="task-table__assignee-pill" [title]="task.assignee.username">
+                    <span 
+                      class="avatar-sm" 
+                      [style.background-color]="taskService.getAvatarColor(task.assignee.username)"
+                    >
+                      {{ task.assignee.username.charAt(0).toUpperCase() }}
                     </span>
-                    <span class="task-table__assignee-name">{{ task.assignee.username }}</span>
-                  } @else {
-                    <span class="task-table__unassigned">Unassigned</span>
+                    <span class="assignee-name">{{ task.assignee.username }}</span>
+                  </div>
+                } @else {
+                  <span class="text-muted text-xs">Unassigned</span>
+                }
+              </td>
+
+              <td class="task-table__cell">
+                @let perf = getPerformanceInfo(task);
+                @if (perf) {
+                  <div class="perf-compact" [title]="perf.label">
+                    <span class="perf-compact__icon" [class.perf-compact__icon--success]="perf.color === 'success'" [class.perf-compact__icon--danger]="perf.color === 'danger'" [class.perf-compact__icon--warning]="perf.color === 'warning'">{{ perf.icon }}</span>
+                    @if (perf.diffText) {
+                      <span class="perf-compact__text" [class.perf-compact__text--success]="perf.color === 'success'" [class.perf-compact__text--danger]="perf.color === 'danger'" [class.perf-compact__text--warning]="perf.color === 'warning'">{{ perf.diffText }}</span>
+                    }
+                  </div>
+                }
+              </td>
+
+              <td class="task-table__cell task-table__cell--actions" (click)="$event.stopPropagation()">
+                <div class="dropdown">
+                  <button class="btn--dots" (click)="toggleMenu(task.id, $event)" aria-label="Task options">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  </button>
+                  
+                  @if (activeMenuId() === task.id) {
+                    <div class="dropdown-menu animate-fade-in animate-scale-in">
+                      <button class="dropdown-item" (click)="openEditModal(task)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 2.5 2.5-10 10H8.5v-2.5l10-10z"/></svg>
+                        Edit Details
+                      </button>
+                      <button class="dropdown-item" (click)="openLogWorkModal(task)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Log Work
+                      </button>
+                      <button class="dropdown-item dropdown-item--danger" (click)="deleteTask(task)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Delete Task
+                      </button>
+                    </div>
                   }
                 </div>
               </td>
             </tr>
-          }
- @empty {
+          } @empty {
             <tr>
-              <td colspan="7" class="task-table__empty">No records found.</td>
+              <td colspan="9" class="task-table__empty-row">
+                <div class="empty-results">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <h3>No tasks found</h3>
+                  @if (taskService.tasks().length === 0) {
+                    <p>Create new task</p>
+                  } @else {
+                    <p>Try adjusting your search or filters to find what you're looking for.</p>
+                  }
+                </div>
+              </td>
             </tr>
           }
         </tbody>
@@ -114,24 +178,50 @@
   }
 </section>
 
-<!-- Task Form Modal -->
+<!-- Modals -->
 @if (filterService.showCreateTaskModal()) {
-  <app-task-form
-    [task]="editingTask()"
-    (closed)="closeForm()"
-    (saved)="onFormSaved()"
-  />
+  <app-task-form [task]="editingTask()" (closed)="closeForm()" (saved)="onFormSaved()" />
 }
 
-<!-- Task Details Modal -->
 @if (showDetails()) {
-  @let t = detailsTask();
-  @if (t) {
-    <app-task-details
-      [task]="t"
-      (closed)="closeDetailsModal()"
-      (edit)="onDetailsEdit($event)"
-      (delete)="onDetailsDelete($event)"
-    />
+  @let dt = detailsTask();
+  @if (dt) {
+    <app-task-details [task]="dt" (closed)="closeDetailsModal()" (edit)="onDetailsEdit($event)" (delete)="onDetailsDelete($event)" />
   }
+}
+
+@if (logWorkTask()) {
+  <app-log-work-dialog [task]="logWorkTask()!" (closed)="closeLogWorkModal()" (saved)="closeLogWorkModal()"></app-log-work-dialog>
+}
+
+@if (confirmDeleteTask()) {
+  <div class="confirm-modal-overlay animate-fade-in" (click)="cancelDelete()">
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal__icon confirm-modal__icon--danger">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a1.5 1.5 0 0 1 2 2v2"/></svg>
+      </div>
+      <h3 class="confirm-modal__title">Delete this task?</h3>
+      <p class="confirm-modal__text">Are you sure you want to delete <strong>"{{ confirmDeleteTask()?.title }}"?</strong><br>This action cannot be undone.</p>
+      <div class="confirm-modal__actions">
+        <button class="btn btn--secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn--danger" (click)="onConfirmDelete()">Delete Task</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isBulkDeleting()) {
+  <div class="confirm-modal-overlay animate-fade-in" (click)="cancelDelete()">
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal__icon confirm-modal__icon--danger">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a1.5 1.5 0 0 1 2 2v2"/></svg>
+      </div>
+      <h3 class="confirm-modal__title">Delete Multiple Tasks?</h3>
+      <p class="confirm-modal__text">Are you sure you want to delete <strong>{{ selectedTaskIds().size }} tasks?</strong><br>This action cannot be undone.</p>
+      <div class="confirm-modal__actions">
+        <button class="btn btn--secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn--danger" (click)="onConfirmBulkDelete()">Delete All</button>
+      </div>
+    </div>
+  </div>
 }

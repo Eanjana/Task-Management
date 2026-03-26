@@ -26,9 +26,20 @@ export class ToastService {
    */
   show(message: string, type: ToastType = 'info', duration: number = 4000): void {
     const id = this.nextId++;
-    this._toasts.update((arr) => [...arr, { id, message, type }]);
+    
+    let shouldAdd = true;
+    this._toasts.update((arr) => {
+      // Prevent exact duplicates
+      if (arr.some(t => t.message === message)) {
+        shouldAdd = false;
+        return arr;
+      }
+      return [...arr, { id, message, type }].slice(-3); // Keep max 3 toasts
+    });
 
-    setTimeout(() => this.dismiss(id), duration);
+    if (shouldAdd) {
+      setTimeout(() => this.dismiss(id), duration);
+    }
   }
 
   /**

@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .database import Base, engine
-from .models import User, Task, Attachment # Ensure models are loaded for Base.metadata
+from .models import User, Task, Attachment, WorkLog, ActiveTaskMember  # Ensure models are loaded for Base.metadata
 from .routers import auth, tasks, attachments
 
 

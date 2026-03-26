@@ -3,18 +3,11 @@
  * @author Anjana E
  * @date 24-03-2026
  */
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  OnInit,
-  DestroyRef,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { TaskService } from '../../services/task.service';
 import { TaskFormComponent } from '../../components/task-form/task-form';
 import { TaskDetailsComponent } from '../../components/task-details/task-details';
+import { LogWorkDialogComponent } from '../../components/log-work-dialog/log-work-dialog';
 import { Task, TaskStatus, TaskUpdatePayload, PRIORITY_LABELS, STATUS_LABELS } from '../../models/task.interface';
 import { ToastService } from '../../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,7 +17,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 @Component({
   selector: 'app-task-board',
   standalone: true,
-  imports: [TaskFormComponent, TaskDetailsComponent],
+  imports: [TaskFormComponent, TaskDetailsComponent, LogWorkDialogComponent],
   templateUrl: './task-board.html',
   styleUrl: './task-board.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,15 +25,18 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class TaskBoardComponent implements OnInit {
   protected taskService = inject(TaskService);
   private toast = inject(ToastService);
-  protected authService = inject(AuthService); // Added
+  protected authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
   protected showDetails = signal(false);
+  protected showLogWork = signal(false);
   protected readonly priorityLabels = PRIORITY_LABELS;
   protected readonly statusLabels = STATUS_LABELS;
   protected editingTask = signal<Task | null>(null);
   protected detailsTask = signal<Task | null>(null);
+  protected logWorkTask = signal<Task | null>(null);
   protected draggedTask = signal<Task | null>(null);
+  protected confirmDeleteTask = signal<Task | null>(null);
 
   protected filterService = inject(FilterService);
 
@@ -79,6 +75,17 @@ export class TaskBoardComponent implements OnInit {
         result = result.filter((t) => t.assignee?.username.toLowerCase().includes(a));
       }
     }
+    
+    if (filters.date) {
+      result = result.filter(t => {
+        try {
+          const createdStr = new Date(t.created_at).toISOString().split('T')[0];
+          return createdStr === filters.date;
+        } catch {
+          return false;
+        }
+      });
+    }
 
     return result;
   }
@@ -116,29 +123,47 @@ export class TaskBoardComponent implements OnInit {
     this.detailsTask.set(null);
   }
 
+  openLogWorkDialog(task: Task): void {
+    this.logWorkTask.set(task);
+    this.showLogWork.set(true);
+  }
+
+  closeLogWorkDialog(): void {
+    this.showLogWork.set(false);
+    this.logWorkTask.set(null);
+    this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
+
   onDetailsEdit(task: Task): void {
     this.closeDetailsModal();
     this.openEditModal(task);
   }
 
   onDetailsDelete(task: Task): void {
-    if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+    this.confirmDeleteTask.set(task);
+  }
+
+  deleteTask(task: Task, event: Event): void {
+    event.stopPropagation();
+    this.confirmDeleteTask.set(task);
+  }
+
+  cancelDelete(): void {
+    this.confirmDeleteTask.set(null);
+  }
+
+  onConfirmDelete(): void {
+    const task = this.confirmDeleteTask();
+    if (task) {
       this.taskService.deleteTask(task.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.toast.success('Task deleted successfully');
+          this.confirmDeleteTask.set(null);
           this.closeDetailsModal();
         },
-        error: () => this.toast.error('Failed to delete task'),
-      });
-    }
-  }
-
-  deleteTask(task: Task, event: MouseEvent): void {
-    event.stopPropagation();
-    if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
-      this.taskService.deleteTask(task.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: () => this.toast.success('Task deleted successfully'),
-        error: () => this.toast.error('Failed to delete task'),
+        error: () => {
+          // Error handled by interceptor
+        },
       });
     }
   }
@@ -195,22 +220,17 @@ export class TaskBoardComponent implements OnInit {
     if (task.status === newStatus) return; // No change
 
     if (newStatus === 'completed') {
-      const time = prompt('How many minutes did you spend on this task?', task.time_taken_minutes.toString());
-      if (time !== null) {
-        const minutes = parseInt(time, 10) || 0;
-        this.updateTaskStatus(task, newStatus, minutes);
-      }
+      this.openLogWorkDialog(task);
     } else {
       this.updateTaskStatus(task, newStatus);
     }
   }
 
-  private updateTaskStatus(task: Task, newStatus: TaskStatus, timeMinutes?: number): void {
+  private updateTaskStatus(task: Task, newStatus: TaskStatus): void {
     // Optimistic update
     this.taskService.updateTaskStatusLocally(task.id, newStatus);
 
     const payload: TaskUpdatePayload = { status: newStatus };
-    if (timeMinutes !== undefined) payload.time_taken_minutes = timeMinutes;
 
     // API update
     this.taskService
@@ -218,10 +238,48 @@ export class TaskBoardComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         error: () => {
-          this.toast.error('Failed to update task status');
           // Revert optimistic update
           this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
         },
-      });
+    });
+  }
+
+  formatTime(minutes: number): string {
+    if (!minutes) return '—';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0 && m > 0) return `${h}h ${m}m`;
+    if (h > 0) return `${h}h`;
+    return `${m}m`;
+  }
+
+  getPerformanceInfo(task: Task): { color: string, icon: string, label: string, diffText: string } | null {
+    if (task.status !== 'completed' || task.assigned_time_minutes === 0) return null;
+    
+    const diff = (task.total_time_spent_minutes || 0) - (task.assigned_time_minutes || 0);
+    const threshold = task.assigned_time_minutes * 0.1;
+
+    if (diff < -threshold) { 
+        return { 
+          color: 'success', 
+          icon: '↑', 
+          label: 'Ahead of schedule',
+          diffText: this.formatTime(Math.abs(diff)) 
+        }; 
+    }
+    if (diff > threshold) { 
+        return { 
+          color: 'danger', 
+          icon: '↓', 
+          label: 'Behind schedule',
+          diffText: this.formatTime(diff) 
+        }; 
+    }
+    return { 
+      color: 'warning', 
+      icon: '→', 
+      label: 'On track',
+      diffText: ''
+    };
   }
 }

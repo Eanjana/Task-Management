@@ -72,6 +72,28 @@
     }
   }
 
+  &--success {
+    color: var(--clr-success);
+    background: var(--clr-success-bg);
+    border: 1px solid rgba(0,0,0,0.06);
+
+    &:hover:not(:disabled) {
+      background: var(--clr-success);
+      color: #ffffff;
+    }
+  }
+
+  &--warning {
+    color: var(--clr-warning);
+    background: var(--clr-warning-bg);
+    border: 1px solid rgba(0,0,0,0.06);
+
+    &:hover:not(:disabled) {
+      background: var(--clr-warning);
+      color: #ffffff;
+    }
+  }
+
   &--icon {
     padding: v.$spacing-sm;
     width: 36px;
@@ -88,5 +110,11 @@
   &--lg {
     padding: v.$spacing-md v.$spacing-lg;
     font-size: v.$font-base;
+  }
+
+  &--xs {
+    padding: 2px v.$spacing-sm;
+    font-size: 10px;
+    height: 24px;
   }
 }

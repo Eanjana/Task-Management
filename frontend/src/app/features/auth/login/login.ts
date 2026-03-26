@@ -31,6 +31,7 @@ export class LoginComponent {
   protected isRegisterMode = signal(false);
   protected errorMessage = signal('');
   protected isLoading = this.authService.isLoading;
+  protected showPassword = signal(false);
 
   /** Password regex: at least 6 chars, 1 uppercase, 1 number, 1 symbol */
   private passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{6,}$/;
@@ -117,9 +118,11 @@ export class LoginComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            this.toast.success('Your account has been created successfully!');
-            this.isRegisterMode.set(false);
+            this.toast.success('Registration successful! Please sign in with your new credentials.');
             this.authForm.reset();
+            if (this.isRegisterMode()) {
+              this.toggleMode();
+            }
             this.errorMessage.set('');
           },
           error: (err) => {

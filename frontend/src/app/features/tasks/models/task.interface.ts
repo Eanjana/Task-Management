@@ -21,17 +21,48 @@ export interface TaskAttachment {
   created_at: string;
 }
 
+export interface WorkLogUser {
+  id: number;
+  username: string;
+}
+
+export interface WorkLog {
+  id: number;
+  task_id: number;
+  user_id: number;
+  start_time: string;
+  end_time: string;
+  minutes_spent: number;
+  description: string;
+  user: WorkLogUser | null;
+  created_at: string;
+}
+
+export interface ActiveMember {
+  id: number;
+  task_id: number;
+  user_id: number;
+  started_at: string;
+  user: WorkLogUser | null;
+}
+
 export interface Task {
   id: number;
   title: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  time_taken_minutes: number;
+  assigned_time_minutes: number;
+  total_time_spent_minutes: number;
   assignee_id: number | null;
+  completed_by_id: number | null;
+  hidden_from_list: boolean;
   assignee: TaskAssignee | null;
+  completed_by: TaskAssignee | null;
   attachments: TaskAttachment[];
-  team: string; // Added field
+  work_logs: WorkLog[];
+  active_members: ActiveMember[];
+  team: string;
   created_at: string;
   updated_at: string | null;
 }
@@ -41,9 +72,9 @@ export interface TaskCreatePayload {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  time_taken_minutes: number;
+  assigned_time_minutes: number;
   assignee_id: number | null;
-  team: string; // Added field
+  team: string;
 }
 
 export interface TaskUpdatePayload {
@@ -51,9 +82,19 @@ export interface TaskUpdatePayload {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  time_taken_minutes?: number;
+  assigned_time_minutes?: number;
+  total_time_spent_minutes?: number;
   assignee_id?: number | null;
-  team?: string; // Added field
+  team?: string;
+  completed_by_id?: number | null;
+  hidden_from_list?: boolean;
+}
+
+export interface WorkLogCreatePayload {
+  start_time: string;
+  end_time: string;
+  minutes_spent: number;
+  description: string;
 }
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {

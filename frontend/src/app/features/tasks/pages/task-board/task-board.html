@@ -1,199 +1,233 @@
-<section class="task-list" aria-label="Kanban board view">
+<section class="task-board-view" aria-label="Kanban board view">
 
   @if (taskService.isLoading()) {
-    <div class="task-list__loading" aria-live="polite">
-      <span class="animate-spin" aria-hidden="true">⟳</span>
-      Loading board...
+    <div class="task-board__loading" aria-live="polite">
+      <div class="loader"></div>
+      <p>Syncing your workspace...</p>
     </div>
   } @else {
     <div class="kanban">
-      <!-- To Do Column -->
+      <!-- ── To Do Column ── -->
       <div class="kanban__column kanban__column--todo">
         <header class="kanban__column-header kanban__column-header--todo">
-          <div class="kanban__column-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            To Do
+          <div class="kanban__column-info">
+            <span class="kanban__column-dot"></span>
+            <h2 class="kanban__column-title">TO DO</h2>
+            <span class="kanban__count kanban__count--todo">{{ filteredTodoTasks().length }}</span>
           </div>
-          <span class="kanban__count">{{ filteredTodoTasks().length }}</span>
+          <button class="kanban__add-btn" (click)="openCreateModal()" aria-label="Add task">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
         </header>
+        <div class="kanban__cards-container custom-scrollbar kanban__cards"
+          (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)" (drop)="onDrop('todo', $event)">
 
-        <div
-          class="kanban__cards"
-          role="list"
-          (dragover)="onDragOver($event)"
-          (dragenter)="onDragEnter($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop('todo', $event)"
-        >
           @for (task of filteredTodoTasks(); track task.id) {
-            <article
-              class="task-card"
+            <article class="task-card animate-fade-in"
+              [class]="'task-card--' + task.priority"
               draggable="true"
-              role="listitem"
-              (dragstart)="onDragStart(task, $event)"
-              (dragend)="onDragEnd($event)"
-              (click)="openDetailsModal(task)"
-            >
-              <div class="task-card__header">
-                <span class="task-card__id">TS-{{ task.id }}</span>
-                <h3 class="task-card__title">{{ task.title }}</h3>
-                <div class="task-card__menu">
-                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
-                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+              (dragstart)="onDragStart(task, $event)" (dragend)="onDragEnd($event)">
+              <div class="task-card__main">
+                <div class="task-card__content" (click)="openDetailsModal(task)">
+                  <div class="task-card__header">
+                    <div class="task-card__meta">
+                      <span class="task-card__id">TS-{{ task.id }}</span>
+                      @if (task.team) { <span class="task-card__team">{{ task.team }}</span> }
+                    </div>
+                  </div>
+                  <h3 class="task-card__title">{{ task.title }}</h3>
+                </div>
+                <div class="task-card__actions" draggable="false">
+                  <button class="task-card__action-btn" (mousedown)="$event.stopPropagation()" (click)="openEditModal(task); $event.stopPropagation()" aria-label="Edit task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 2.5 2.5-10 10H8.5v-2.5l10-10z"/></svg>
+                  </button>
+                  <button class="task-card__action-btn task-card__action-btn--danger" (mousedown)="$event.stopPropagation()" (click)="deleteTask(task, $event); $event.stopPropagation()" aria-label="Delete task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
                 </div>
               </div>
-              @if (task.description) {
-                <p class="task-card__description">{{ task.description }}</p>
-              }
-              <footer class="task-card__footer">
+              <div class="task-card__footer">
                 <div class="task-card__tags">
-                  <span class="badge badge--dot badge--{{ task.priority }}">
-                    {{ priorityLabels[task.priority] }}
-                  </span>
+                  <span class="priority-indicator priority-indicator--{{ task.priority }}" [title]="priorityLabels[task.priority] + ' Priority'"></span>
                   @if (task.attachments.length) {
-                    <div class="attachment-tag" title="Has attachments">
-                      <span class="attachment-tag__icon">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                      </span>
-                      {{ task.attachments.length }}
+                    <div class="task-card__stat" title="Has attachments">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      <span>{{ task.attachments.length }}</span>
                     </div>
                   }
                 </div>
                 @if (task.assignee) {
-                  <span class="task-row__avatar" [title]="task.assignee.username">
+                  <div 
+                    class="task-card__avatar" 
+                    [title]="task.assignee.username"
+                    [style.background-color]="taskService.getAvatarColor(task.assignee.username)"
+                  >
                     {{ task.assignee.username.charAt(0).toUpperCase() }}
-                  </span>
+                  </div>
+                } @else {
+                  <div class="task-card__unassigned" title="Unassigned">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
                 }
-              </footer>
+              </div>
             </article>
+          } @empty {
+            <div class="kanban__empty-state">
+              <div class="kanban__empty-icon">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                </svg>
+              </div>
+              <p>No tasks to do</p>
+            </div>
           }
         </div>
       </div>
 
-      <!-- In Progress Column -->
-      <div class="kanban__column kanban__column--in-progress">
-        <header class="kanban__column-header kanban__column-header--in-progress">
-          <div class="kanban__column-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            In Progress
+      <!-- ── In Progress Column ── -->
+      <div class="kanban__column kanban__column--progress">
+        <header class="kanban__column-header kanban__column-header--progress">
+          <div class="kanban__column-info">
+            <span class="kanban__column-dot"></span>
+            <h2 class="kanban__column-title">IN PROGRESS</h2>
+            <span class="kanban__count kanban__count--progress">{{ filteredInProgressTasks().length }}</span>
           </div>
-          <span class="kanban__count">{{ filteredInProgressTasks().length }}</span>
         </header>
+        <div class="kanban__cards-container custom-scrollbar kanban__cards"
+          (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)" (drop)="onDrop('in_progress', $event)">
 
-        <div
-          class="kanban__cards"
-          role="list"
-          (dragover)="onDragOver($event)"
-          (dragenter)="onDragEnter($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop('in_progress', $event)"
-        >
           @for (task of filteredInProgressTasks(); track task.id) {
-            <article
-              class="task-card"
+            <article class="task-card animate-fade-in"
+              [class]="'task-card--' + task.priority"
               draggable="true"
-              role="listitem"
-              (dragstart)="onDragStart(task, $event)"
-              (dragend)="onDragEnd($event)"
-              (click)="openDetailsModal(task)"
-            >
-              <div class="task-card__header">
-                <span class="task-card__id">TS-{{ task.id }}</span>
-                <h3 class="task-card__title">{{ task.title }}</h3>
-                <div class="task-card__menu">
-                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
-                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+              (dragstart)="onDragStart(task, $event)" (dragend)="onDragEnd($event)">
+              <div class="task-card__main">
+                <div class="task-card__content" (click)="openDetailsModal(task)">
+                  <div class="task-card__header">
+                    <div class="task-card__meta">
+                      <span class="task-card__id">TS-{{ task.id }}</span>
+                      @if (task.team) { <span class="task-card__team">{{ task.team }}</span> }
+                    </div>
+                  </div>
+                  <h3 class="task-card__title">{{ task.title }}</h3>
+                </div>
+                <div class="task-card__actions" draggable="false">
+                  <button class="task-card__action-btn" (mousedown)="$event.stopPropagation()" (click)="openEditModal(task); $event.stopPropagation()" aria-label="Edit task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 2.5 2.5-10 10H8.5v-2.5l10-10z"/></svg>
+                  </button>
+                  <button class="task-card__action-btn task-card__action-btn--danger" (mousedown)="$event.stopPropagation()" (click)="deleteTask(task, $event); $event.stopPropagation()" aria-label="Delete task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
                 </div>
               </div>
-              @if (task.description) {
-                <p class="task-card__description">{{ task.description }}</p>
-              }
-              <footer class="task-card__footer">
+              <div class="task-card__footer">
                 <div class="task-card__tags">
-                  <span class="badge badge--dot badge--{{ task.priority }}">
-                    {{ priorityLabels[task.priority] }}
-                  </span>
-                  @if (task.attachments.length) {
-                    <div class="attachment-tag" title="Has attachments">
-                      <span class="attachment-tag__icon">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                      </span>
-                      {{ task.attachments.length }}
+                  <span class="priority-indicator priority-indicator--{{ task.priority }}" [title]="priorityLabels[task.priority] + ' Priority'"></span>
+                  @if (task.active_members && task.active_members.length) {
+                    <div class="task-card__stat" title="Being worked on">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span class="task-card__stat-dot"></span>
                     </div>
                   }
                 </div>
                 @if (task.assignee) {
-                  <span class="task-row__avatar" [title]="task.assignee.username">
+                  <div 
+                    class="task-card__avatar" 
+                    [title]="task.assignee.username"
+                    [style.background-color]="taskService.getAvatarColor(task.assignee.username)"
+                  >
                     {{ task.assignee.username.charAt(0).toUpperCase() }}
-                  </span>
+                  </div>
                 }
-              </footer>
+              </div>
             </article>
+          } @empty {
+            <div class="kanban__empty-state">
+              <div class="kanban__empty-icon">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <p>No task in progress</p>
+            </div>
           }
         </div>
       </div>
 
-      <!-- Completed Column -->
-      <div class="kanban__column kanban__column--completed">
-        <header class="kanban__column-header kanban__column-header--completed">
-          <div class="kanban__column-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-            Completed
+      <!-- ── Completed Column ── -->
+      <div class="kanban__column kanban__column--done">
+        <header class="kanban__column-header kanban__column-header--done">
+          <div class="kanban__column-info">
+            <span class="kanban__column-dot"></span>
+            <h2 class="kanban__column-title">COMPLETED</h2>
+            <span class="kanban__count kanban__count--done">{{ filteredCompletedTasks().length }}</span>
           </div>
-          <span class="kanban__count">{{ filteredCompletedTasks().length }}</span>
         </header>
+        <div class="kanban__cards-container custom-scrollbar kanban__cards"
+          (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)"
+          (dragleave)="onDragLeave($event)" (drop)="onDrop('completed', $event)">
 
-        <div
-          class="kanban__cards"
-          role="list"
-          (dragover)="onDragOver($event)"
-          (dragenter)="onDragEnter($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop('completed', $event)"
-        >
           @for (task of filteredCompletedTasks(); track task.id) {
-            <article
-              class="task-card"
+            <article class="task-card animate-fade-in"
+              [class]="'task-card--' + task.priority"
               draggable="true"
-              role="listitem"
-              (dragstart)="onDragStart(task, $event)"
-              (dragend)="onDragEnd($event)"
-              (click)="openDetailsModal(task)"
-            >
-              <div class="task-card__header">
-                <span class="task-card__id">TS-{{ task.id }}</span>
-                <h3 class="task-card__title task-card__title--completed">
-                  {{ task.title }}
-                </h3>
-                <div class="task-card__menu">
-                  <button class="btn btn--icon btn--xs" (click)="openEditModal(task); $event.stopPropagation()" title="Edit">✎</button>
-                  <button class="btn btn--icon btn--xs btn--danger-hover" (click)="deleteTask(task, $event); $event.stopPropagation()" title="Delete">🗑</button>
+              (dragstart)="onDragStart(task, $event)" (dragend)="onDragEnd($event)">
+              <div class="task-card__main">
+                <div class="task-card__content" (click)="openDetailsModal(task)">
+                  <div class="task-card__header">
+                    <div class="task-card__meta">
+                      <span class="task-card__id">TS-{{ task.id }}</span>
+                      @if (task.team) { <span class="task-card__team">{{ task.team }}</span> }
+                    </div>
+                  </div>
+                  <h3 class="task-card__title">{{ task.title }}</h3>
+                </div>
+                <div class="task-card__actions" draggable="false">
+                  <button class="task-card__action-btn" (mousedown)="$event.stopPropagation()" (click)="openEditModal(task); $event.stopPropagation()" aria-label="Edit task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 2.5 2.5-10 10H8.5v-2.5l10-10z"/></svg>
+                  </button>
+                  <button class="task-card__action-btn task-card__action-btn--danger" (mousedown)="$event.stopPropagation()" (click)="deleteTask(task, $event); $event.stopPropagation()" aria-label="Delete task">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
                 </div>
               </div>
-              @if (task.description) {
-                <p class="task-card__description">{{ task.description }}</p>
-              }
-              <footer class="task-card__footer">
+              <div class="task-card__footer">
                 <div class="task-card__tags">
-                  <span class="badge badge--dot badge--{{ task.priority }}">
-                    {{ priorityLabels[task.priority] }}
-                  </span>
-                  @if (task.attachments.length) {
-                    <div class="attachment-tag" title="Has attachments">
-                      <span class="attachment-tag__icon">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                      </span>
-                      {{ task.attachments.length }}
+                  <span class="priority-indicator priority-indicator--{{ task.priority }}"></span>
+                  @let perf = getPerformanceInfo(task);
+                  @if (perf) {
+                    <div class="perf-compact" [title]="perf.label">
+                      <span class="perf-compact__icon" [class.perf-compact__icon--success]="perf.color === 'success'" [class.perf-compact__icon--danger]="perf.color === 'danger'" [class.perf-compact__icon--warning]="perf.color === 'warning'">{{ perf.icon }}</span>
+                      @if (perf.diffText) {
+                        <span class="perf-compact__text" [class.perf-compact__text--success]="perf.color === 'success'" [class.perf-compact__text--danger]="perf.color === 'danger'" [class.perf-compact__text--warning]="perf.color === 'warning'">{{ perf.diffText }}</span>
+                      }
                     </div>
                   }
                 </div>
-                @if (task.assignee) {
-                  <span class="task-row__avatar" [title]="task.assignee.username">
-                    {{ task.assignee.username.charAt(0).toUpperCase() }}
-                  </span>
+                @if (task.completed_by) {
+                  <div 
+                    class="task-card__avatar task-card__avatar--done" 
+                    [title]="'Completed by ' + task.completed_by.username"
+                    [style.background-color]="taskService.getAvatarColor(task.completed_by.username)"
+                  >
+                    {{ task.completed_by.username.charAt(0).toUpperCase() }}
+                  </div>
                 }
-              </footer>
+              </div>
             </article>
+          } @empty {
+            <div class="kanban__empty-state">
+              <div class="kanban__empty-icon kanban__empty-icon--done">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <p>No completed tasks</p>
+            </div>
           }
         </div>
       </div>
@@ -201,24 +235,37 @@
   }
 </section>
 
-<!-- Task Form Modal -->
+<!-- Modals -->
 @if (filterService.showCreateTaskModal()) {
-  <app-task-form
-    [task]="editingTask()"
-    (closed)="closeForm()"
-    (saved)="onFormSaved()"
-  />
+  <app-task-form [task]="editingTask()" (closed)="closeForm()" (saved)="onFormSaved()" />
 }
 
-<!-- Task Details Modal -->
 @if (showDetails()) {
-  @let t = detailsTask();
-  @if (t) {
-    <app-task-details
-      [task]="t"
-      (closed)="closeDetailsModal()"
-      (edit)="onDetailsEdit($event)"
-      (delete)="onDetailsDelete($event)"
-    />
+  @let td = detailsTask();
+  @if (td) {
+    <app-task-details [task]="td" (closed)="closeDetailsModal()" (edit)="onDetailsEdit($event)" (delete)="onDetailsDelete($event)" />
   }
+}
+
+@if (showLogWork()) {
+  @let lt = logWorkTask();
+  @if (lt) {
+    <app-log-work-dialog [task]="lt" (closed)="closeLogWorkDialog()" (saved)="closeLogWorkDialog()" />
+  }
+}
+
+@if (confirmDeleteTask()) {
+  <div class="confirm-modal-overlay animate-fade-in" (click)="cancelDelete()">
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal__icon confirm-modal__icon--danger">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a1.5 1.5 0 0 1 2 2v2"/></svg>
+      </div>
+      <h3 class="confirm-modal__title">Delete this task?</h3>
+      <p class="confirm-modal__text">Are you sure you want to delete <strong>"{{ confirmDeleteTask()?.title }}"?</strong><br>This action cannot be undone.</p>
+      <div class="confirm-modal__actions">
+        <button class="btn btn--secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn--danger" (click)="onConfirmDelete()">Delete Task</button>
+      </div>
+    </div>
+  </div>
 }

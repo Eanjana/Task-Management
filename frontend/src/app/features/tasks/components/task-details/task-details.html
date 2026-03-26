@@ -1,76 +1,231 @@
 <div class="modal-backdrop animate-fade-in" (click)="closed.emit()">
   <div
-    class="modal-content animate-slide-up"
+    class="task-details-panel animate-slide-right"
     (click)="$event.stopPropagation()"
     role="dialog"
+    aria-modal="true"
     aria-labelledby="task-details-title"
   >
     <!-- Header -->
     <header class="task-details__header">
-      <div class="task-details__status-badge task-row__priority--{{ task().priority }}">
-        {{ priorityLabels[task().priority] }}
+      <div class="task-details__header-left">
+        <span class="task-details__task-id">TS-{{ currentTask().id }}</span>
+        <span class="badge badge--priority badge--{{ currentTask().priority }}">
+          {{ priorityLabels[currentTask().priority] }}
+        </span>
       </div>
-      <div class="task-details__actions">
-        <button class="btn btn--secondary btn--sm" (click)="edit.emit(task())" aria-label="Edit Task">
-          ✎ Edit
+      <div class="task-details__header-actions">
+        <button class="btn btn--secondary btn--sm" (click)="edit.emit(currentTask())" aria-label="Edit Task">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 2.5 2.5-10 10H8.5v-2.5l10-10z"/></svg>
+          Edit
         </button>
-        <button class="btn btn--danger btn--sm" (click)="delete.emit(task())" aria-label="Delete Task">
-          🗑 Delete
+        <button class="btn btn--danger btn--sm" (click)="delete.emit(currentTask())" aria-label="Delete Task">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete
         </button>
         <button class="btn btn--icon" (click)="closed.emit()" aria-label="Close">
-          ✕
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="task-details__main custom-scrollbar">
-      <h1 id="task-details-title" class="task-details__title">{{ task().title }}</h1>
-      
+    <main class="task-details__body custom-scrollbar">
+
+      <!-- Title & Status -->
+      <div class="task-details__title-section">
+        <h1 id="task-details-title" class="task-details__title">{{ currentTask().title }}</h1>
+        <span class="badge badge--status badge--{{ currentTask().status }}">{{ statusLabels[currentTask().status] }}</span>
+      </div>
+
+      <!-- ── Start Working Banner ── -->
+      @if (currentTask().status !== 'completed') {
+        <div class="task-details__working-banner" [class.task-details__working-banner--active]="isCurrentUserWorking()">
+          <div class="task-details__working-info">
+            @if (isCurrentUserWorking()) {
+              <span class="working-dot working-dot--pulse"></span>
+              <span class="working-label">You are currently working on this task</span>
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="working-label">Ready to start?</span>
+            }
+          </div>
+          @if (isCurrentUserWorking()) {
+            <button class="btn btn--sm btn--warning" (click)="stopWorking()" [disabled]="isStopping()" type="button">
+              @if (isStopping()) {
+                <span class="animate-spin" aria-hidden="true">⟳</span> Stopping...
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                Stop Working
+              }
+            </button>
+          } @else {
+            <button class="btn btn--sm btn--success" (click)="startWorking()" [disabled]="isStarting()" type="button">
+              @if (isStarting()) {
+                <span class="animate-spin" aria-hidden="true">⟳</span> Starting...
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Start Working
+              }
+            </button>
+          }
+        </div>
+
+        @if (currentTask().active_members && currentTask().active_members.length) {
+          <div class="task-details__active-workers">
+            <span class="task-details__section-label">Currently Working:</span>
+            <div class="task-details__worker-avatars">
+              @for (member of currentTask().active_members; track member.id) {
+                <div
+            class="worker-avatar"
+            [title]="member.user?.username"
+            [style.background-color]="getAvatarColor(member.user?.username)"
+          >
+            {{ member.user?.username?.charAt(0)?.toUpperCase() }}
+            <span class="worker-avatar__name">{{ member.user?.username }}</span>
+            <div class="worker-avatar__dot"></div>
+          </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      <!-- ── Meta Grid ── -->
       <div class="task-details__meta-grid">
         <div class="task-details__meta-item">
-          <span class="task-details__meta-label">Status</span>
-          <span class="task-details__meta-value status-indicator status-indicator--{{ task().status }}">
-            {{ statusLabels[task().status] }}
+          <span class="task-details__meta-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Assigned Time
           </span>
+          <span class="task-details__meta-value">{{ formattedAssignedTime() }}</span>
         </div>
+
         <div class="task-details__meta-item">
           <span class="task-details__meta-label">
-            @if (task().status === 'completed') { Time Taken } @else { Assigned Time }
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Time Spent
           </span>
-          <span class="task-details__meta-value">🕐 {{ formattedTime() }}</span>
+          <span class="task-details__meta-value" [class.meta-value--danger]="currentTask().total_time_spent_minutes > currentTask().assigned_time_minutes && currentTask().assigned_time_minutes > 0">
+            {{ formattedTimeSpent() }}
+          </span>
         </div>
+
         <div class="task-details__meta-item">
-          <span class="task-details__meta-label">Assignee</span>
-          <div class="task-details__assignee">
-            @if (task().assignee) {
-              <span class="task-row__avatar">{{ task().assignee?.username?.charAt(0)?.toUpperCase() }}</span>
-              <span class="task-details__meta-value">{{ task().assignee?.username }}</span>
-            } @else {
-              <span class="task-details__meta-value">Unassigned</span>
+          <span class="task-details__meta-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Assignee
+          </span>
+          @if (currentTask().assignee) {
+            <div class="task-details__assignee-info">
+              <span class="avatar-sm" [style.background-color]="getAvatarColor(currentTask().assignee!.username)">{{ currentTask().assignee!.username.charAt(0).toUpperCase() }}</span>
+              <span class="task-details__meta-value">{{ currentTask().assignee!.username }}</span>
+            </div>
+          } @else {
+            <span class="task-details__meta-value text-muted">Unassigned</span>
+          }
+        </div>
+
+        <div class="task-details__meta-item">
+          <span class="task-details__meta-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Created
+          </span>
+          <span class="task-details__meta-value">{{ currentTask().created_at | date:'mediumDate' }}</span>
+        </div>
+
+        @if (currentTask().team) {
+          <div class="task-details__meta-item">
+            <span class="task-details__meta-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Team
+            </span>
+            <span class="task-details__meta-value">{{ currentTask().team }}</span>
+          </div>
+        }
+
+        @if (currentTask().status === 'completed' && currentTask().completed_by) {
+          <div class="task-details__meta-item">
+            <span class="task-details__meta-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Completed By
+            </span>
+            <div class="task-details__assignee-info">
+              <span class="avatar-sm avatar-sm--success" [style.background-color]="getAvatarColor(currentTask().completed_by!.username)">{{ currentTask().completed_by!.username.charAt(0).toUpperCase() }}</span>
+              <span class="task-details__meta-value">{{ currentTask().completed_by!.username }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- ── Performance Insight ── -->
+      @if (performanceInfo()) {
+        <div class="performance-banner performance-banner--{{ performanceInfo()?.color }}">
+          <div class="performance-banner__icon-wrap">
+            <span class="performance-banner__icon">{{ performanceInfo()?.icon }}</span>
+            @if (performanceInfo()?.diffText) {
+              <span class="performance-banner__diff">{{ performanceInfo()?.diffText }}</span>
+            }
+          </div>
+          <div class="performance-banner__content">
+            <h4 class="performance-banner__title">{{ performanceInfo()?.label }}</h4>
+            <p class="performance-banner__detail">{{ performanceInfo()?.detail }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- ── Description ── -->
+      <div class="task-details__section">
+        <h2 class="task-details__section-title">Description</h2>
+        <div class="task-details__description">
+          {{ currentTask().description || 'No description provided.' }}
+        </div>
+      </div>
+
+      <!-- ── Work Log History ── -->
+      @if (currentTask().work_logs && currentTask().work_logs.length) {
+        <div class="task-details__section">
+          <h2 class="task-details__section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Work Log ({{ currentTask().work_logs.length }} entries)
+          </h2>
+          <div class="work-log-list">
+            @for (log of currentTask().work_logs; track log.id) {
+              <div class="work-log-entry">
+                <div
+              class="log-row__avatar"
+              [style.background-color]="getAvatarColor(log.user?.username)"
+            >
+              {{ log.user?.username?.charAt(0)?.toUpperCase() }}
+            </div>
+                <div class="work-log-entry__body">
+                  <div class="work-log-entry__header">
+                    <span class="work-log-entry__user">{{ log.user?.username || 'Unknown' }}</span>
+                    <span class="work-log-entry__time-range">{{ formatTime12h(log.start_time) }} → {{ formatTime12h(log.end_time) }}</span>
+                    <span class="work-log-entry__duration">{{ formatMinutes(log.minutes_spent) }}</span>
+                  </div>
+                  @if (log.description) {
+                    <p class="work-log-entry__desc">{{ log.description }}</p>
+                  }
+                  <span class="work-log-entry__date">{{ log.created_at | date:'shortDate' }}</span>
+                </div>
+              </div>
             }
           </div>
         </div>
-        <div class="task-details__meta-item">
-          <span class="task-details__meta-label">Created</span>
-          <span class="task-details__meta-value">{{ task().created_at | date:'medium' }}</span>
-        </div>
-      </div>
+      }
 
-      <div class="task-details__description-section">
-        <h2 class="task-details__section-title">Description</h2>
-        <div class="task-details__description">
-          {{ task().description || 'No description provided.' }}
-        </div>
-      </div>
-
-      @if (task().attachments.length) {
-        <div class="task-details__attachments-section">
-          <h2 class="task-details__section-title">Attachments ({{ task().attachments.length }})</h2>
+      <!-- ── Attachments ── -->
+      @if (currentTask().attachments.length) {
+        <div class="task-details__section">
+          <h2 class="task-details__section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            Attachments ({{ currentTask().attachments.length }})
+          </h2>
           <div class="task-details__attachments-grid">
-            @for (file of task().attachments; track file.id) {
+            @for (file of currentTask().attachments; track file.id) {
               <div class="attachment-card">
-                <a [href]="getAttachmentUrl(file.file_path)" target="_blank" class="attachment-card__preview">
+                <a [href]="getAttachmentUrl(file.file_path)" target="_blank" rel="noopener noreferrer" class="attachment-card__preview">
                   <img [src]="getAttachmentUrl(file.file_path)" [alt]="file.file_name" />
                 </a>
                 <div class="attachment-card__info">

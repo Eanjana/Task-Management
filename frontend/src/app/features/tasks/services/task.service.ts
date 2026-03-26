@@ -13,6 +13,9 @@ import {
   TaskUpdatePayload,
   TaskStatus,
   TaskAttachment,
+  WorkLog,
+  WorkLogCreatePayload,
+  ActiveMember,
 } from '../models/task.interface';
 
 @Injectable({ providedIn: 'root' })
@@ -48,7 +51,8 @@ export class TaskService {
     this._isLoading.set(true);
     return this.http.get<Task[]>(`${environment.apiUrl}/tasks`).pipe(
       tap((tasks) => {
-        this._tasks.set(tasks);
+        const enriched = tasks.map(t => this.enrichTaskData(t));
+        this._tasks.set(enriched);
         this._isLoading.set(false);
       }),
       catchError((err) => {
@@ -56,6 +60,30 @@ export class TaskService {
         return throwError(() => err);
       })
     );
+  }
+
+  /**
+   * @description Enrich task with calculated fields if needed
+   */
+  private enrichTaskData(task: Task): Task {
+    const calculatedTotal = task.work_logs?.reduce((sum, log) => sum + (log.minutes_spent || 0), 0) || 0;
+    return {
+      ...task,
+      total_time_spent_minutes: calculatedTotal || task.total_time_spent_minutes
+    };
+  }
+
+  /**
+   * @description Get a consistent color based on name
+   */
+  getAvatarColor(name?: string | null): string {
+    if (!name) return 'var(--clr-avatar-bg)';
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 65%, 45%)`;
   }
 
   /**
@@ -71,7 +99,8 @@ export class TaskService {
   createTask(payload: TaskCreatePayload): Observable<Task> {
     return this.http.post<Task>(`${environment.apiUrl}/tasks`, payload).pipe(
       tap((task) => {
-        this._tasks.update((arr) => [task, ...arr]);
+        const enriched = this.enrichTaskData(task);
+        this._tasks.update((arr) => [enriched, ...arr]);
       }),
       catchError((err) => throwError(() => err))
     );
@@ -83,8 +112,9 @@ export class TaskService {
   updateTask(id: number, payload: TaskUpdatePayload): Observable<Task> {
     return this.http.patch<Task>(`${environment.apiUrl}/tasks/${id}`, payload).pipe(
       tap((updated) => {
+        const enriched = this.enrichTaskData(updated);
         this._tasks.update((arr) =>
-          arr.map((t) => (t.id === id ? updated : t))
+          arr.map((t) => (t.id === id ? enriched : t))
         );
       }),
       catchError((err) => throwError(() => err))
@@ -129,6 +159,53 @@ export class TaskService {
   updateTaskStatusLocally(taskId: number, newStatus: TaskStatus): void {
     this._tasks.update((arr) =>
       arr.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+  }
+
+  // ── Work Logs ──
+
+  /**
+   * @description Add a work log entry to a task
+   */
+  addWorkLog(taskId: number, payload: WorkLogCreatePayload): Observable<WorkLog> {
+    return this.http.post<WorkLog>(`${environment.apiUrl}/tasks/${taskId}/work-logs`, payload).pipe(
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
+   * @description Get all work logs for a task
+   */
+  getWorkLogs(taskId: number): Observable<WorkLog[]> {
+    return this.http.get<WorkLog[]>(`${environment.apiUrl}/tasks/${taskId}/work-logs`).pipe(
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  // ── Active Members ──
+
+  /**
+   * @description Start working on a task
+   */
+  startWorking(taskId: number): Observable<ActiveMember> {
+    return this.http.post<ActiveMember>(`${environment.apiUrl}/tasks/${taskId}/start-working`, {}).pipe(
+      tap(() => {
+        // Reload to get updated task with new active member
+        this.loadTasks().subscribe();
+      }),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
+   * @description Stop working on a task
+   */
+  stopWorking(taskId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/tasks/${taskId}/stop-working`).pipe(
+      tap(() => {
+        this.loadTasks().subscribe();
+      }),
+      catchError((err) => throwError(() => err))
     );
   }
 }

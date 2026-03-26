@@ -81,8 +81,8 @@ export class TaskFormComponent implements OnInit {
         this.description.set(t.description ?? '');
         this.status.set(t.status);
         this.priority.set(t.priority);
-        this.timeHours.set(Math.floor(t.time_taken_minutes / 60));
-        this.timeMinutes.set(t.time_taken_minutes % 60);
+        this.timeHours.set(Math.floor(t.assigned_time_minutes / 60));
+        this.timeMinutes.set(t.assigned_time_minutes % 60);
         this.assigneeId.set(t.assignee_id);
         this.team.set(t.team ?? '');
         this.existingAttachments.set(t.attachments || []);
@@ -145,7 +145,7 @@ export class TaskFormComponent implements OnInit {
       description: this.description().trim(),
       status: this.status(),
       priority: this.priority(),
-      time_taken_minutes: totalMinutes,
+      assigned_time_minutes: totalMinutes,
       assignee_id: this.assigneeId(),
       team: this.team().trim(), // Added
     };
@@ -231,7 +231,9 @@ export class TaskFormComponent implements OnInit {
             );
             this.toast.success('Attachment removed');
           },
-          error: () => this.toast.error('Failed to remove attachment'),
+          error: () => {
+            // Error handeled by global interceptor
+          },
         });
     }
   }

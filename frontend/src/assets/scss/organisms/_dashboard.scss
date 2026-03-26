@@ -134,71 +134,7 @@
   }
 }
 
-// ── Kanban Board ──
-.kanban {
-  display: flex;
-  gap: v.$spacing-lg;
-  padding: v.$spacing-lg;
-  overflow-x: auto;
-  min-height: calc(100vh - #{v.$navbar-height} - 120px);
-  @include m.custom-scrollbar;
-
-  &__column {
-    @include m.flex-column;
-    min-width: 320px;
-    max-width: 360px;
-    flex: 1;
-    background: var(--clr-bg);
-    border-radius: v.$radius-lg;
-    border: 1px solid var(--clr-border);
-    overflow: hidden;
-  }
-
-  &__column-header {
-    @include m.flex-between;
-    padding: v.$spacing-md v.$spacing-lg;
-    border-bottom: 1px solid var(--clr-border);
-
-    &--todo { border-top: 3px solid var(--clr-text-muted); }
-    &--in-progress { border-top: 3px solid var(--clr-info); }
-    &--completed { border-top: 3px solid var(--clr-success); }
-  }
-
-  &__column-title {
-    @include m.flex-center;
-    gap: v.$spacing-sm;
-    font-size: v.$font-md;
-    font-weight: v.$font-semibold;
-  }
-
-  &__count {
-    @include m.flex-center;
-    width: 22px;
-    height: 22px;
-    font-size: v.$font-xs;
-    font-weight: v.$font-bold;
-    background: var(--clr-primary-subtle);
-    color: var(--clr-primary);
-    border-radius: v.$radius-full;
-  }
-
-  &__cards {
-    @include m.flex-column;
-    gap: v.$spacing-sm;
-    padding: v.$spacing-md;
-    flex: 1;
-    overflow-y: auto;
-    min-height: 200px;
-    @include m.custom-scrollbar;
-
-    &--drag-over {
-      background: var(--clr-primary-subtle);
-      border-radius: v.$radius-md;
-      outline: 2px dashed var(--clr-primary);
-      outline-offset: -4px;
-    }
-  }
-}
+// -- Kanban styles moved to task-board.scss --
 
 .task-card {
   @include m.card;
@@ -245,7 +181,6 @@
     flex: 1;
     
     &--completed {
-      text-decoration: line-through;
       color: var(--clr-text-muted);
     }
   }

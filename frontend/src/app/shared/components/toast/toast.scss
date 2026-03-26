@@ -1,0 +1,78 @@
+@use '../../../../assets/scss/helpers/variables' as v;
+@use '../../../../assets/scss/helpers/mixins' as m;
+
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: v.$z-toast;
+  display: flex;
+  flex-direction: column;
+  gap: v.$spacing-md;
+  pointer-events: none; // let clicks pass through the container
+}
+
+.toast {
+  pointer-events: auto; // re-enable clicks on the actual toast
+  @include m.flex-center;
+  gap: v.$spacing-md;
+  justify-content: flex-start;
+  padding: 14px v.$spacing-lg;
+  border-radius: v.$radius-lg;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  box-shadow: v.$shadow-lg;
+  border: 1px solid var(--clr-border);
+  min-width: 320px;
+  max-width: 450px;
+
+  &__message {
+    flex: 1;
+    font-size: v.$font-sm;
+    font-weight: v.$font-medium;
+    line-height: 1.4;
+  }
+
+  &__icon {
+    @include m.flex-center;
+    flex-shrink: 0;
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    color: var(--clr-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: v.$radius-sm;
+    @include m.flex-center;
+    transition: all v.$transition-fast;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+      background: var(--clr-surface-hover);
+    }
+  }
+
+  // Variants
+  &--success {
+    border-left: 4px solid var(--clr-success);
+    .toast__icon { color: var(--clr-success); }
+  }
+
+  &--error {
+    border-left: 4px solid var(--clr-danger);
+    .toast__icon { color: var(--clr-danger); }
+  }
+
+  &--warning {
+    border-left: 4px solid var(--clr-warning);
+    .toast__icon { color: var(--clr-warning); }
+  }
+
+  &--info {
+    border-left: 4px solid var(--clr-primary);
+    .toast__icon { color: var(--clr-primary); }
+  }
+}

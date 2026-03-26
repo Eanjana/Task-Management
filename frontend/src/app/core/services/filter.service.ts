@@ -8,6 +8,7 @@ export interface FilterState {
   client: string;
   team: string;
   assignee: string;
+  date: string;
 }
 
 @Injectable({
@@ -23,7 +24,8 @@ export class FilterService {
     criticality: '',
     client: '',
     team: '',
-    assignee: ''
+    assignee: '',
+    date: ''
   });
 
   public updateFilter(key: keyof FilterState, value: string): void {
@@ -41,7 +43,8 @@ export class FilterService {
       criticality: '',
       client: '',
       team: '',
-      assignee: ''
+      assignee: '',
+      date: ''
     });
   }
 }

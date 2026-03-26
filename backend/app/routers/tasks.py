@@ -14,7 +14,10 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.task import TaskStatus
 from ..models.user import User
-from ..schemas.task import TaskCreate, TaskUpdate, TaskResponse
+from ..schemas.task import (
+    TaskCreate, TaskUpdate, TaskResponse,
+    WorkLogCreate, WorkLogResponse, ActiveMemberResponse,
+)
 from ..services.auth import get_current_user
 from ..services.task import (
     get_all_tasks,
@@ -22,6 +25,10 @@ from ..services.task import (
     create_task,
     update_task,
     delete_task,
+    add_work_log,
+    get_work_logs,
+    start_working,
+    stop_working,
 )
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
@@ -76,3 +83,48 @@ def remove_task(
 ):
     """Delete a task by ID."""
     delete_task(db, task_id)
+
+
+# ── Work Logs ──
+
+@router.post("/{task_id}/work-logs", response_model=WorkLogResponse, status_code=201)
+def create_work_log(
+    task_id: int,
+    log_data: WorkLogCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Add a work log entry to a task."""
+    return add_work_log(db, task_id, current_user.id, log_data)
+
+
+@router.get("/{task_id}/work-logs", response_model=List[WorkLogResponse])
+def list_work_logs(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+):
+    """Get all work logs for a task."""
+    return get_work_logs(db, task_id)
+
+
+# ── Active Members ──
+
+@router.post("/{task_id}/start-working", response_model=ActiveMemberResponse, status_code=201)
+def start_working_on_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Mark current user as actively working on a task."""
+    return start_working(db, task_id, current_user.id)
+
+
+@router.delete("/{task_id}/stop-working", status_code=204)
+def stop_working_on_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Remove current user from actively working on a task."""
+    stop_working(db, task_id, current_user.id)
