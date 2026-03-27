@@ -23,7 +23,7 @@ from ..services.task import get_task_by_id
 
 router = APIRouter(prefix="/api/attachments", tags=["Attachments"])
 
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".avif"}
 
 
 @router.post("/{task_id}", response_model=AttachmentResponse, status_code=201)
