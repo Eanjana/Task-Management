@@ -75,6 +75,8 @@ export interface TaskCreatePayload {
   assigned_time_minutes: number;
   assignee_id: number | null;
   team: string;
+  created_at?: string;
+
 }
 
 export interface TaskUpdatePayload {

@@ -60,6 +60,21 @@
         />
       </div>
 
+      <!-- Creation Date (Optional) -->
+      @if (!isEditMode()) {
+        <div class="task-modal__field">
+          <label class="task-modal__label" for="task-date">Creation Date</label>
+          <input
+            class="task-modal__input"
+            id="task-date"
+            type="datetime-local"
+            [ngModel]="createdAt()"
+            (ngModelChange)="createdAt.set($event)"
+            name="createdAt"
+          />
+        </div>
+      }
+
       <!-- Status & Priority Row -->
       <div class="task-modal__row">
         <div class="task-modal__field">

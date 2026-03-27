@@ -89,6 +89,8 @@ class TaskCreate(BaseModel):
     assigned_time_minutes: Optional[int] = Field(default=0, ge=0)
     assignee_id: Optional[int] = None
     team: Optional[str] = ""
+    created_at: Optional[datetime] = None
+
 
 
 class TaskUpdate(BaseModel):

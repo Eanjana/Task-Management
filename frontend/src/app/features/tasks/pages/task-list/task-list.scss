@@ -220,6 +220,11 @@
     padding: 2px 8px;
     border-radius: v.$radius-sm;
     border: 1px solid var(--clr-divider);
+    min-width: 90px;
+    display: inline-flex;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
   }
 
   &__assignee-pill {

@@ -61,6 +61,7 @@ export class TaskFormComponent implements OnInit {
   protected assigneeId = signal<number | null>(null);
   protected team = signal(''); // Added
   protected isSubmitting = signal(false);
+  protected createdAt = signal<string>('');
   protected selectedFile = signal<File | null>(null);
   protected previewUrl = signal<string | null>(null);
   protected existingAttachments = signal<TaskAttachment[]>([]);
@@ -95,6 +96,7 @@ export class TaskFormComponent implements OnInit {
         this.timeHours.set(0);
         this.timeMinutes.set(0);
         this.team.set('');
+        this.createdAt.set('');
         this.existingAttachments.set([]);
         this.clearSelectedFile();
 
@@ -147,7 +149,8 @@ export class TaskFormComponent implements OnInit {
       priority: this.priority(),
       assigned_time_minutes: totalMinutes,
       assignee_id: this.assigneeId(),
-      team: this.team().trim(), // Added
+      team: this.team().trim(),
+      created_at: this.createdAt() || undefined,
     };
 
     const task = this.task();

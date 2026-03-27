@@ -218,12 +218,7 @@ export class TaskBoardComponent implements OnInit {
     if (!task) return;
 
     if (task.status === newStatus) return; // No change
-
-    if (newStatus === 'completed') {
-      this.openLogWorkDialog(task);
-    } else {
-      this.updateTaskStatus(task, newStatus);
-    }
+    this.updateTaskStatus(task, newStatus);
   }
 
   private updateTaskStatus(task: Task, newStatus: TaskStatus): void {

@@ -53,6 +53,7 @@ def create_task(db: Session, task_data: TaskCreate) -> Task:
         assigned_time_minutes=task_data.assigned_time_minutes or 0,
         assignee_id=task_data.assignee_id,
         team=task_data.team,
+        created_at=task_data.created_at,
     )
     db.add(new_task)
     db.commit()
