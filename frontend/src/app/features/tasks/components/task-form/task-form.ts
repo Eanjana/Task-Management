@@ -61,7 +61,8 @@ export class TaskFormComponent implements OnInit {
   protected assigneeId = signal<number | null>(null);
   protected team = signal(''); // Added
   protected isSubmitting = signal(false);
-  protected createdAt = signal<string>('');
+  protected createdDate = signal<string>('');
+  protected createdTime = signal<string>('');
   protected selectedFile = signal<File | null>(null);
   protected previewUrl = signal<string | null>(null);
   protected existingAttachments = signal<TaskAttachment[]>([]);
@@ -96,7 +97,8 @@ export class TaskFormComponent implements OnInit {
         this.timeHours.set(0);
         this.timeMinutes.set(0);
         this.team.set('');
-        this.createdAt.set('');
+        this.createdDate.set('');
+        this.createdTime.set('');
         this.existingAttachments.set([]);
         this.clearSelectedFile();
 
@@ -150,7 +152,7 @@ export class TaskFormComponent implements OnInit {
       assigned_time_minutes: totalMinutes,
       assignee_id: this.assigneeId(),
       team: this.team().trim(),
-      created_at: this.createdAt() || undefined,
+      created_at: this.getCombinedCreatedAt(),
     };
 
     const task = this.task();
@@ -188,6 +190,14 @@ export class TaskFormComponent implements OnInit {
           error: () => this.isSubmitting.set(false),
         });
     }
+  }
+
+  private getCombinedCreatedAt(): string | undefined {
+    if (!this.createdDate()) return undefined;
+    
+    const date = this.createdDate();
+    const time = this.createdTime() || '00:00';
+    return `${date}T${time}:00`;
   }
 
   private completeSubmission(): void {

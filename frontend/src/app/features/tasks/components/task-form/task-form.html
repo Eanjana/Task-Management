@@ -62,16 +62,29 @@
 
       <!-- Creation Date (Optional) -->
       @if (!isEditMode()) {
-        <div class="task-modal__field">
-          <label class="task-modal__label" for="task-date">Creation Date</label>
-          <input
-            class="task-modal__input"
-            id="task-date"
-            type="datetime-local"
-            [ngModel]="createdAt()"
-            (ngModelChange)="createdAt.set($event)"
-            name="createdAt"
-          />
+        <div class="task-modal__row">
+          <div class="task-modal__field">
+            <label class="task-modal__label" for="task-date">Date</label>
+            <input
+              class="task-modal__input"
+              id="task-date"
+              type="date"
+              [ngModel]="createdDate()"
+              (ngModelChange)="createdDate.set($event)"
+              name="createdDate"
+            />
+          </div>
+          <div class="task-modal__field">
+            <label class="task-modal__label" for="task-time">Time</label>
+            <input
+              class="task-modal__input"
+              id="task-time"
+              type="time"
+              [ngModel]="createdTime()"
+              (ngModelChange)="createdTime.set($event)"
+              name="createdTime"
+            />
+          </div>
         </div>
       }
 
