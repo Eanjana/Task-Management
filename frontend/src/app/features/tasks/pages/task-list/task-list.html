@@ -53,6 +53,7 @@
             <tr 
               class="task-table__row animate-fade-in" 
               [class.task-table__row--selected]="selectedTaskIds().has(task.id)"
+              [class.task-table__row--active-menu]="activeMenuId() === task.id"
               (click)="openDetailsModal(task)"
               tabindex="0"
               (keydown.enter)="openDetailsModal(task)"

@@ -139,6 +139,12 @@
 
       .task-table__cell:first-child { border-left: 2px solid var(--clr-primary); }
     }
+
+    &--active-menu {
+      z-index: 1000 !important;
+      position: relative;
+      background: var(--clr-surface-hover);
+    }
   }
 
   &__cell {
@@ -291,19 +297,18 @@
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   right: 0;
-  min-width: 160px;
+  min-width: 170px;
   background: var(--clr-surface);
   border: 1px solid var(--clr-border);
-  border-radius: v.$radius-lg;
+  border-radius: v.$radius-md;
   box-shadow: v.$shadow-xl;
   padding: v.$spacing-xs;
-  z-index: 9999 !important;
+  z-index: 1100;
   overflow: visible;
-
-  // If this is near bottom, it might need to open upwards.
-  // For simplicity, we ensure parent table row has z-index.
+  transform-origin: top right;
+  border: 1px solid var(--clr-divider);
 }
 
 .perf-compact {
@@ -344,19 +349,7 @@
   }
 }
 
-.dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  min-width: 160px;
-  background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: v.$radius-md;
-  box-shadow: var(--shadow-dropdown);
-  z-index: 1000;
-  overflow: hidden;
-  transform-origin: top right;
-}
+// Dropdown menu styles already consolidated above
 
 .dropdown-item {
   @include m.flex-center;
