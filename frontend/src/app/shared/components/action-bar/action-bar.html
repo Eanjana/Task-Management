@@ -66,14 +66,72 @@
           }
         </div>
 
-        <div class="action-bar__date-range">
-          <input 
-            type="date" 
-            class="action-bar__date-input" 
-            [ngModel]="filterService.filters().date" 
-            (ngModelChange)="onFilterChange('date', $event)"
-            aria-label="Created date"
+        <!-- Date Range Picker (Single Calendar) -->
+        <div class="date-range-picker" (click)="$event.stopPropagation()">
+          <button 
+            class="premium-dropdown__trigger" 
+            [class.premium-dropdown__trigger--active]="showCalendar() || hasDateFilter()"
+            (click)="toggleCalendar($event)"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>{{ dateRangeLabel() }}</span>
+            @if (hasDateFilter()) {
+              <button class="date-range-picker__clear" (click)="clearDateRange($event)" aria-label="Clear date filter" type="button">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            }
+          </button>
+
+          @if (showCalendar()) {
+            <div class="date-range-picker__calendar animate-fade-in animate-scale-in">
+              <!-- Calendar Header -->
+              <div class="calendar__header">
+                <button class="calendar__nav-btn" (click)="prevMonth($event)" aria-label="Previous month" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="calendar__title">{{ calendarTitle() }}</span>
+                <button class="calendar__nav-btn" (click)="nextMonth($event)" aria-label="Next month" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+
+              <!-- Day labels -->
+              <div class="calendar__weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+
+              <!-- Days grid -->
+              <div class="calendar__days">
+                @for (day of calendarDays(); track day.dateStr) {
+                  <button 
+                    class="calendar__day"
+                    [class.calendar__day--other-month]="!day.isCurrentMonth"
+                    [class.calendar__day--today]="day.isToday"
+                    [class.calendar__day--in-range]="isInRange(day.dateStr)"
+                    [class.calendar__day--range-start]="isRangeStart(day.dateStr)"
+                    [class.calendar__day--range-end]="isRangeEnd(day.dateStr)"
+                    (click)="selectDate(day, $event)"
+                    (mouseenter)="onDayHover(day)"
+                    type="button"
+                  >
+                    {{ day.date }}
+                  </button>
+                }
+              </div>
+
+              <!-- Footer -->
+              <div class="calendar__footer">
+                @if (rangeStart() && !rangeEnd()) {
+                  <span class="calendar__hint">Select end date</span>
+                }
+                @if (hasDateFilter()) {
+                  <button class="calendar__clear-btn" (click)="clearDateRange($event)" type="button">Clear</button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>

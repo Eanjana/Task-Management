@@ -1,7 +1,7 @@
 /**
  * @description Task list page showing tasks in a professional data table
  * @author Anjana E
- * @date 26-03-2026
+ * @date 28-03-2026
  */
 import {
   Component,
@@ -12,6 +12,7 @@ import {
   OnInit,
   DestroyRef,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { TaskService } from '../../services/task.service';
 import { TaskFormComponent } from '../../components/task-form/task-form';
 import { TaskDetailsComponent } from '../../components/task-details/task-details';
@@ -25,7 +26,7 @@ import { FilterService } from '../../../../core/services/filter.service';
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [TaskFormComponent, TaskDetailsComponent, LogWorkDialogComponent],
+  imports: [TaskFormComponent, TaskDetailsComponent, LogWorkDialogComponent, DatePipe],
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,12 +96,18 @@ export class TaskListComponent implements OnInit {
       }
     }
 
-    // Date filtering
-    if (filters.date) {
+    // Date range filtering
+    if (filters.dateFrom || filters.dateTo) {
       allTasks = allTasks.filter(t => {
         try {
           const createdStr = new Date(t.created_at).toISOString().split('T')[0];
-          return createdStr === filters.date;
+          if (filters.dateFrom && filters.dateTo) {
+            return createdStr >= filters.dateFrom && createdStr <= filters.dateTo;
+          }
+          if (filters.dateFrom) {
+            return createdStr >= filters.dateFrom;
+          }
+          return createdStr <= filters.dateTo;
         } catch {
           return false;
         }
@@ -112,6 +119,34 @@ export class TaskListComponent implements OnInit {
 
   ngOnInit(): void {
     this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
+
+  /**
+   * @description Format the total time taken for a task including active working sessions
+   */
+  getTimeTaken(task: Task): string {
+    let totalMinutes = task.total_time_spent_minutes || 0;
+
+    // Add elapsed time from currently active members
+    if (task.active_members.length) {
+      const now = new Date();
+      for (const member of task.active_members) {
+        if (member.started_at) {
+          const started = new Date(member.started_at);
+          const elapsedMs = now.getTime() - started.getTime();
+          totalMinutes += Math.max(0, Math.floor(elapsedMs / 60000));
+        }
+      }
+    }
+
+    return this.taskService.formatDuration(totalMinutes);
+  }
+
+  /**
+   * @description Format the assigned time for display
+   */
+  getAssignTime(task: Task): string {
+    return this.taskService.formatHours(task.assigned_time_minutes);
   }
 
   toggleAllSelections(): void {
@@ -144,8 +179,7 @@ export class TaskListComponent implements OnInit {
           }
         },
         error: () => {
-          // Error handled by global interceptor
-          this.isBulkDeleting.set(false); // Ensure dialog closes on error too
+          this.isBulkDeleting.set(false);
         },
       });
     });
@@ -227,8 +261,7 @@ export class TaskListComponent implements OnInit {
           this.closeMenus();
         },
         error: () => {
-          // Error already handled by global interceptor
-          this.confirmDeleteTask.set(null); // Ensure dialog closes on error too
+          this.confirmDeleteTask.set(null);
         },
       });
     }

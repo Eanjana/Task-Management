@@ -76,11 +76,17 @@ export class TaskBoardComponent implements OnInit {
       }
     }
     
-    if (filters.date) {
+    if (filters.dateFrom || filters.dateTo) {
       result = result.filter(t => {
         try {
           const createdStr = new Date(t.created_at).toISOString().split('T')[0];
-          return createdStr === filters.date;
+          if (filters.dateFrom && filters.dateTo) {
+            return createdStr >= filters.dateFrom && createdStr <= filters.dateTo;
+          }
+          if (filters.dateFrom) {
+            return createdStr >= filters.dateFrom;
+          }
+          return createdStr <= filters.dateTo;
         } catch {
           return false;
         }

@@ -115,9 +115,9 @@
     z-index: 1;
 
     &--checkbox { width: 40px; }
+    &--actions { width: 42px; }
     &--id { width: 70px; }
     &--title { min-width: 200px; }
-    &--actions { width: 48px; }
   }
 
   &__row {
@@ -132,12 +132,20 @@
 
       td:first-child { border-radius: v.$radius-md 0 0 v.$radius-md; }
       td:last-child  { border-radius: 0 v.$radius-md v.$radius-md 0; }
+
+      .task-table__row-checkbox {
+        opacity: 1;
+      }
     }
 
     &--selected {
       background: var(--clr-primary-subtle);
 
       .task-table__cell:first-child { border-left: 2px solid var(--clr-primary); }
+
+      .task-table__row-checkbox {
+        opacity: 1;
+      }
     }
 
     &--active-menu {
@@ -147,6 +155,11 @@
     }
   }
 
+  &__row-checkbox {
+    opacity: 0;
+    transition: opacity v.$transition-fast;
+  }
+
   &__cell {
     padding: v.$spacing-sm v.$spacing-md;
     vertical-align: middle;
@@ -154,12 +167,27 @@
     border-top: 1px solid var(--clr-divider);
     border-bottom: 1px solid var(--clr-divider);
 
-    &--checkbox { border-left: 1px solid var(--clr-divider); }
-    &--actions  { border-right: 1px solid var(--clr-divider); text-align: right; }
+    &--checkbox { 
+      border-left: 1px solid var(--clr-divider);
+      width: 40px;
+    }
+
+    &--actions-left {
+      width: 42px;
+      padding: v.$spacing-xs;
+    }
 
     &--title {
       font-weight: v.$font-semibold;
       color: var(--clr-text);
+    }
+
+    &--time {
+      white-space: nowrap;
+    }
+
+    &--date {
+      white-space: nowrap;
     }
   }
 
@@ -239,12 +267,53 @@
     justify-content: flex-start;
   }
 
+  // ── Time column values ──
+  &__time-value {
+    font-size: v.$font-xs;
+    font-weight: v.$font-semibold;
+    color: var(--clr-text-secondary);
+    @include m.flex-center;
+    gap: 4px;
+    justify-content: flex-start;
+
+    &--active {
+      color: var(--clr-success);
+    }
+
+    &--assigned {
+      color: var(--clr-text-muted);
+    }
+  }
+
+  // ── Date column value ──
+  &__date-value {
+    font-size: v.$font-xs;
+    color: var(--clr-text-secondary);
+  }
+
   &__empty-row {
     padding: v.$spacing-2xl;
     text-align: center;
     color: var(--clr-text-muted);
     border: none;
   }
+}
+
+// ── Working Dot (small for table) ──
+.working-dot {
+  &--pulse-sm {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: v.$radius-full;
+    background: var(--clr-success);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
 }
 
 // ── Performance Indicator ──
@@ -289,7 +358,10 @@
 .dropdown {
   position: relative;
   
-  // ensure active dropdown is above next rows
+  &--left {
+    z-index: 1;
+  }
+
   &:focus-within, &:active, &:hover {
     z-index: 1000 !important;
   }
@@ -301,14 +373,20 @@
   right: 0;
   min-width: 170px;
   background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
+  border: 1px solid var(--clr-divider);
   border-radius: v.$radius-md;
   box-shadow: v.$shadow-xl;
   padding: v.$spacing-xs;
   z-index: 1100;
   overflow: visible;
   transform-origin: top right;
-  border: 1px solid var(--clr-divider);
+
+  // Left-aligned dropdown (for left-side 3-dot menu)
+  &--left {
+    right: auto;
+    left: 0;
+    transform-origin: top left;
+  }
 }
 
 .perf-compact {
@@ -348,8 +426,6 @@
     color: var(--clr-text);
   }
 }
-
-// Dropdown menu styles already consolidated above
 
 .dropdown-item {
   @include m.flex-center;
