@@ -85,6 +85,18 @@
               name="createdTime"
             />
           </div>
+          <!-- Due Date (Optional) -->
+          <div class="task-modal__field">
+            <label class="task-modal__label" for="task-due-date">Due Date (Optional)</label>
+            <input
+              class="task-modal__input"
+              id="task-due-date"
+              type="date"
+              [ngModel]="dueDate()"
+              (ngModelChange)="dueDate.set($event)"
+              name="dueDate"
+            />
+          </div>
         </div>
       }
 

@@ -248,42 +248,7 @@ export class TaskListComponent implements OnInit {
     this.confirmDeleteTask.set(task);
   }
 
-  formatTime(minutes: number): string {
-    if (minutes === 0) return '—';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    return `${m}m`;
-  }
-
-  getPerformanceInfo(task: Task): { color: string, icon: string, label: string, diffText: string } | null {
-    if (task.status !== 'completed' || task.assigned_time_minutes === 0) return null;
-    
-    const diff = (task.total_time_spent_minutes || 0) - (task.assigned_time_minutes || 0);
-    const threshold = task.assigned_time_minutes * 0.1;
-
-    if (diff < -threshold) { 
-        return { 
-          color: 'success', 
-          icon: '↑', 
-          label: 'Ahead of schedule',
-          diffText: this.formatTime(Math.abs(diff)) 
-        }; 
-    }
-    if (diff > threshold) { 
-        return { 
-          color: 'danger', 
-          icon: '↓', 
-          label: 'Behind schedule',
-          diffText: this.formatTime(diff) 
-        }; 
-    }
-    return { 
-      color: 'warning', 
-      icon: '→', 
-      label: 'On track',
-      diffText: ''
-    };
+  getPerformanceInfo(task: Task) {
+    return this.taskService.getPerformanceInfo(task);
   }
 }

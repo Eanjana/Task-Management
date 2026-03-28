@@ -6,6 +6,7 @@ Task service layer.
 @date 24-03-2026
 """
 
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -54,6 +55,8 @@ def create_task(db: Session, task_data: TaskCreate) -> Task:
         assignee_id=task_data.assignee_id,
         team=task_data.team,
         created_at=task_data.created_at,
+        due_at=task_data.due_at,
+        completed_at=datetime.now() if task_data.status == TaskStatus.COMPLETED else None,
     )
     db.add(new_task)
     db.commit()
@@ -69,6 +72,19 @@ def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Task:
     """
     task = get_task_by_id(db, task_id)
     update_data = task_data.model_dump(exclude_unset=True)
+
+    # Set/Clear completed_at if status changes
+    if "status" in update_data:
+        new_status = update_data["status"]
+        if new_status == TaskStatus.COMPLETED and task.status != TaskStatus.COMPLETED:
+            task.completed_at = datetime.now()
+            # Stop all active members and auto-log their time
+            active_users = [m.user_id for m in task.active_members]
+            for uid in active_users:
+                stop_working(db, task_id, uid)
+            task = get_task_by_id(db, task_id) # Refresh
+        elif new_status != TaskStatus.COMPLETED and task.status == TaskStatus.COMPLETED:
+            task.completed_at = None
 
     for field, value in update_data.items():
         setattr(task, field, value)
@@ -151,7 +167,7 @@ def start_working(db: Session, task_id: int, user_id: int) -> ActiveTaskMember:
 
 
 def stop_working(db: Session, task_id: int, user_id: int) -> None:
-    """Remove a user from actively working on a task."""
+    """Remove a user from actively working on a task and log their work time."""
     member = db.query(ActiveTaskMember).filter(
         ActiveTaskMember.task_id == task_id,
         ActiveTaskMember.user_id == user_id,
@@ -161,5 +177,29 @@ def stop_working(db: Session, task_id: int, user_id: int) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User is not currently working on this task",
         )
+        
+    started_at = member.started_at
+    if started_at:
+        now = datetime.now(started_at.tzinfo)
+        delta = now - started_at
+        minutes_spent = max(1, int(delta.total_seconds() / 60))
+        
+        # Create work log
+        work_log = WorkLog(
+            task_id=task_id,
+            user_id=user_id,
+            start_time=started_at.strftime("%H:%M"),
+            end_time=now.strftime("%H:%M"),
+            minutes_spent=minutes_spent,
+            description="Automatic work log from 'Start Working' session"
+        )
+        db.add(work_log)
+        
     db.delete(member)
+    db.flush()
+    
+    task = get_task_by_id(db, task_id)
+    if task:
+        task.total_time_spent_minutes = sum(wl.minutes_spent for wl in task.work_logs)
+        
     db.commit()

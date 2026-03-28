@@ -166,6 +166,18 @@
     }
   }
 
+  &__created-info {
+    @include m.flex-column;
+    gap: 2px;
+  }
+
+  &__meta-time {
+    font-size: v.$font-xs;
+    color: var(--clr-text-muted);
+    font-weight: v.$font-regular;
+    font-variant-numeric: tabular-nums;
+  }
+
   &__assignee-info {
     @include m.flex-center;
     justify-content: flex-start;
@@ -230,7 +242,13 @@
   // ── Attachments ──
   &__attachments-grid {
     display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: v.$spacing-md;
+  }
+
+  &__banners {
+    display: flex;
+    flex-direction: column;
     gap: v.$spacing-md;
   }
 }

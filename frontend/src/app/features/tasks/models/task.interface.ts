@@ -64,6 +64,8 @@ export interface Task {
   active_members: ActiveMember[];
   team: string;
   created_at: string;
+  completed_at: string | null;
+  due_at: string | null;
   updated_at: string | null;
 }
 
@@ -76,7 +78,7 @@ export interface TaskCreatePayload {
   assignee_id: number | null;
   team: string;
   created_at?: string;
-
+  due_at?: string;
 }
 
 export interface TaskUpdatePayload {
@@ -89,6 +91,7 @@ export interface TaskUpdatePayload {
   assignee_id?: number | null;
   team?: string;
   completed_by_id?: number | null;
+  due_at?: string;
   hidden_from_list?: boolean;
 }
 

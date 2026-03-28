@@ -90,6 +90,7 @@ class TaskCreate(BaseModel):
     assignee_id: Optional[int] = None
     team: Optional[str] = ""
     created_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
 
 
 
@@ -104,6 +105,7 @@ class TaskUpdate(BaseModel):
     assignee_id: Optional[int] = None
     team: Optional[str] = None
     completed_by_id: Optional[int] = None
+    due_at: Optional[datetime] = None
     hidden_from_list: Optional[bool] = None
 
 
@@ -136,6 +138,8 @@ class TaskResponse(BaseModel):
     work_logs: List[WorkLogResponse] = []
     active_members: List[ActiveMemberResponse] = []
     created_at: datetime
+    completed_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:

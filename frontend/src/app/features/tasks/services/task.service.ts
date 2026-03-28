@@ -208,4 +208,138 @@ export class TaskService {
       catchError((err) => throwError(() => err))
     );
   }
+
+  /**
+   * @description Format minutes into [D]d [H]h [M]m format
+   */
+  formatDuration(minutes: number): string {
+    if (!minutes) return '—';
+    const totalMinutes = Math.abs(minutes);
+    const d = Math.floor(totalMinutes / (24 * 60));
+    const h = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const m = totalMinutes % 60;
+
+    const parts: string[] = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0 || parts.length === 0) parts.push(`${m}m`);
+    
+    return parts.join(' ');
+  }
+
+  /**
+   * @description Format minutes strictly in [H]h [M]m format (prevents days breakdown)
+   */
+  formatHours(minutes: number): string {
+    if (!minutes) return '—';
+    const totalMinutes = Math.abs(minutes);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+
+    if (h > 0 && m > 0) return `${h}h ${m}m`;
+    if (h > 0) return `${h}h`;
+    return `${m}m`;
+  }
+
+  /**
+   * @description Calculate performance purely against total logged work elapsed vs assigned budget.
+   */
+  getPerformanceInfo(task: Task): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
+    if (!task.assigned_time_minutes || !task.total_time_spent_minutes) return null;
+
+    const spent = task.total_time_spent_minutes;
+    const assigned = task.assigned_time_minutes;
+    const diff = spent - assigned;
+
+    if (task.status === 'completed') {
+      if (diff <= 0) {
+        return {
+          label: 'Good',
+          color: 'success',
+          icon: '↑',
+          diffText: this.formatDuration(Math.abs(diff)),
+          detail: `Saved ${this.formatDuration(Math.abs(diff))} against estimate`
+        };
+      } else {
+        return {
+          label: 'Delayed',
+          color: 'danger',
+          icon: '↓',
+          diffText: this.formatDuration(diff),
+          detail: `Took ${this.formatDuration(diff)} more than estimated`
+        };
+      }
+    } else {
+      if (diff > 0) {
+        return {
+          label: 'Delayed',
+          color: 'warning',
+          icon: '!',
+          diffText: this.formatDuration(diff),
+          detail: `Currently ${this.formatDuration(diff)} over assigned time`
+        };
+      }
+      return null;
+    }
+  }
+
+  /**
+   * @description Calculate extra calendar timeline calculation (Due date / Created date vs current logic)
+   */
+  getTimelinePerformance(task: Task): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
+    const endTime = task.completed_at ? new Date(task.completed_at) : new Date();
+
+    if (task.due_at) {
+      const dueTime = new Date(task.due_at);
+      const diff = Math.floor((endTime.getTime() - dueTime.getTime()) / (1000 * 60));
+      
+      if (task.status === 'completed') {
+        if (diff > 0) {
+          return { label: 'Completed Late', color: 'danger', icon: '↓', diffText: this.formatDuration(diff), detail: `Overdue by ${this.formatDuration(diff)}` };
+        }
+        return { label: 'Completed Ahead of Schedule', color: 'success', icon: '↑', diffText: this.formatDuration(Math.abs(diff)), detail: `Delivered ${this.formatDuration(Math.abs(diff))} early` };
+      } else {
+        if (diff > 0) {
+          return { label: 'Running Behind Schedule', color: 'warning', icon: '!', diffText: this.formatDuration(diff), detail: `Currently ${this.formatDuration(diff)} past due date` };
+        }
+      }
+      return null;
+    }
+
+    if (!task.assigned_time_minutes) return null;
+
+    const startTime = new Date(task.created_at);
+    const elapsedMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    const diff = elapsedMinutes - task.assigned_time_minutes;
+
+    if (task.status === 'completed') {
+      if (diff > 0) {
+        return {
+          label: 'Timeline: Delayed',
+          color: 'danger',
+          icon: '↓',
+          diffText: this.formatDuration(diff),
+          detail: `Task remained open ${this.formatDuration(diff)} beyond assigned time`
+        };
+      }
+      return {
+        label: 'Timeline: On Schedule',
+        color: 'success',
+        icon: '↑',
+        diffText: this.formatDuration(Math.abs(diff)),
+        detail: `Completed ${this.formatDuration(Math.abs(diff))} within assigned timeframe`
+      };
+    } else {
+      if (diff > 0) {
+        return {
+          label: 'Timeline: Running Late',
+          color: 'warning',
+          icon: '!',
+          diffText: this.formatDuration(diff),
+          detail: `Currently ${this.formatDuration(diff)} past assigned timeframe`
+        };
+      }
+      return null;
+    }
+  }
 }

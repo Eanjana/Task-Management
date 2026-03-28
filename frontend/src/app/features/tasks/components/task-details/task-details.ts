@@ -38,7 +38,7 @@ export class TaskDetailsComponent {
   protected readonly statusLabels = STATUS_LABELS;
   protected readonly priorityLabels = PRIORITY_LABELS;
 
-  private taskService = inject(TaskService);
+  protected taskService = inject(TaskService);
   protected authService = inject(AuthService);
   private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
@@ -63,7 +63,7 @@ export class TaskDetailsComponent {
    */
   protected formattedAssignedTime = computed(() => {
     const minutes = this.currentTask().assigned_time_minutes;
-    return this.formatMinutes(minutes);
+    return this.taskService.formatHours(minutes);
   });
 
   /**
@@ -71,45 +71,18 @@ export class TaskDetailsComponent {
    */
   protected formattedTimeSpent = computed(() => {
     const minutes = this.currentTask().total_time_spent_minutes;
-    return this.formatMinutes(minutes);
+    return this.taskService.formatDuration(minutes);
   });
 
   /**
-   * @description Performance insight: whether the task was completed under/over estimate
+   * @description Performance insight (Time Working vs Budget)
    */
-  protected performanceInfo = computed(() => {
-    const task = this.currentTask();
-    if (task.status !== 'completed' || !task.assigned_time_minutes) return null;
+  protected workPerformanceInfo = computed(() => this.taskService.getPerformanceInfo(this.currentTask()));
 
-    const diff = (task.total_time_spent_minutes || 0) - (task.assigned_time_minutes || 0);
-    const threshold = task.assigned_time_minutes * 0.1;
-
-    if (diff < -threshold) {
-      return {
-        label: 'Completed Ahead of Schedule',
-        color: 'success',
-        icon: '↑',
-        detail: `Saved ${this.formatMinutes(Math.abs(diff))} vs. estimate`,
-        diffText: this.formatMinutes(Math.abs(diff))
-      };
-    }
-    if (diff > threshold) {
-      return {
-        label: 'Went Over Estimate',
-        color: 'danger',
-        icon: '↓',
-        detail: `Exceeded by ${this.formatMinutes(diff)}`,
-        diffText: this.formatMinutes(diff)
-      };
-    }
-    return {
-      label: 'On Track',
-      color: 'warning',
-      icon: '→',
-      detail: 'Completed within estimated time',
-      diffText: ''
-    };
-  });
+  /**
+   * @description Calendar performance insight (Timeline vs Assigned)
+   */
+  protected timelinePerformanceInfo = computed(() => this.taskService.getTimelinePerformance(this.currentTask()));
 
   /**
    * @description Start working on the task
@@ -149,17 +122,6 @@ export class TaskDetailsComponent {
       });
   }
 
-  /**
-   * @description Format minutes to human-readable string
-   */
-  formatMinutes(minutes: number): string {
-    if (!minutes) return '—';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    return `${m}m`;
-  }
 
   /**
    * @description Convert 24-hour time string (HH:mm) to 12-hour format (h:mm AM/PM)

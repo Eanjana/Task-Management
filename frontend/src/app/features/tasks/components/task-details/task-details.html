@@ -129,10 +129,23 @@
         <div class="task-details__meta-item">
           <span class="task-details__meta-label">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Created
+            CREATED AT
           </span>
-          <span class="task-details__meta-value">{{ currentTask().created_at | date:'mediumDate' }}</span>
+          <div class="task-details__created-info">
+            <span class="task-details__meta-value">{{ currentTask().created_at | date:'mediumDate' }}</span>
+            <span class="task-details__meta-time">{{ currentTask().created_at | date:'h:mm a' }}</span>
+          </div>
         </div>
+        
+        @if (currentTask().due_at) {
+          <div class="task-details__meta-item">
+            <span class="task-details__meta-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              DUE DATE
+            </span>
+            <span class="task-details__meta-value meta-value--danger">{{ currentTask().due_at | date:'mediumDate' }}</span>
+          </div>
+        }
 
         @if (currentTask().team) {
           <div class="task-details__meta-item">
@@ -158,21 +171,40 @@
         }
       </div>
 
-      <!-- ── Performance Insight ── -->
-      @if (performanceInfo()) {
-        <div class="performance-banner performance-banner--{{ performanceInfo()?.color }}">
-          <div class="performance-banner__icon-wrap">
-            <span class="performance-banner__icon">{{ performanceInfo()?.icon }}</span>
-            @if (performanceInfo()?.diffText) {
-              <span class="performance-banner__diff">{{ performanceInfo()?.diffText }}</span>
-            }
+      <!-- ── Performance Insights ── -->
+      <div class="task-details__banners">
+        <!-- Work Performance -->
+        @if (workPerformanceInfo()) {
+          <div class="performance-banner performance-banner--{{ workPerformanceInfo()?.color }}">
+            <div class="performance-banner__icon-wrap">
+              <span class="performance-banner__icon">{{ workPerformanceInfo()?.icon }}</span>
+              @if (workPerformanceInfo()?.diffText) {
+                <span class="performance-banner__diff">{{ workPerformanceInfo()?.diffText }}</span>
+              }
+            </div>
+            <div class="performance-banner__content">
+              <h4 class="performance-banner__title">{{ workPerformanceInfo()?.label }}</h4>
+              <p class="performance-banner__detail">{{ workPerformanceInfo()?.detail }}</p>
+            </div>
           </div>
-          <div class="performance-banner__content">
-            <h4 class="performance-banner__title">{{ performanceInfo()?.label }}</h4>
-            <p class="performance-banner__detail">{{ performanceInfo()?.detail }}</p>
+        }
+
+        <!-- Timeline / Calendar Performance -->
+        @if (timelinePerformanceInfo()) {
+          <div class="performance-banner performance-banner--{{ timelinePerformanceInfo()?.color }}">
+            <div class="performance-banner__icon-wrap">
+              <span class="performance-banner__icon">{{ timelinePerformanceInfo()?.icon }}</span>
+              @if (timelinePerformanceInfo()?.diffText) {
+                <span class="performance-banner__diff">{{ timelinePerformanceInfo()?.diffText }}</span>
+              }
+            </div>
+            <div class="performance-banner__content">
+              <h4 class="performance-banner__title">Timeline: {{ timelinePerformanceInfo()?.label }}</h4>
+              <p class="performance-banner__detail">{{ timelinePerformanceInfo()?.detail }}</p>
+            </div>
           </div>
-        </div>
-      }
+        }
+      </div>
 
       <!-- ── Description ── -->
       <div class="task-details__section">
@@ -202,7 +234,7 @@
                   <div class="work-log-entry__header">
                     <span class="work-log-entry__user">{{ log.user?.username || 'Unknown' }}</span>
                     <span class="work-log-entry__time-range">{{ formatTime12h(log.start_time) }} → {{ formatTime12h(log.end_time) }}</span>
-                    <span class="work-log-entry__duration">{{ formatMinutes(log.minutes_spent) }}</span>
+                    <span class="work-log-entry__duration">{{ taskService.formatDuration(log.minutes_spent) }}</span>
                   </div>
                   @if (log.description) {
                     <p class="work-log-entry__desc">{{ log.description }}</p>

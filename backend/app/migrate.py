@@ -67,6 +67,20 @@ def migrate():
         else:
             print("⏭️  hidden_from_list already exists")
 
+        # 7. Add completed_at
+        if "completed_at" not in columns:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN completed_at TIMESTAMPTZ")
+            print("✅ Added completed_at column")
+        else:
+            print("⏭️  completed_at already exists")
+
+        # 8. Add due_at
+        if "due_at" not in columns:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN due_at TIMESTAMPTZ")
+            print("✅ Added due_at column")
+        else:
+            print("⏭️  due_at already exists")
+
         # 5. Create work_logs table if not exists
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS work_logs (

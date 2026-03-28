@@ -54,6 +54,8 @@ class Task(Base):
     completed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     hidden_from_list = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    due_at = Column(DateTime(timezone=True), nullable=True)
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

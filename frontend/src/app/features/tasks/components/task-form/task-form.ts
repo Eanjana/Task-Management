@@ -63,6 +63,7 @@ export class TaskFormComponent implements OnInit {
   protected isSubmitting = signal(false);
   protected createdDate = signal<string>('');
   protected createdTime = signal<string>('');
+  protected dueDate = signal<string>('');
   protected selectedFile = signal<File | null>(null);
   protected previewUrl = signal<string | null>(null);
   protected existingAttachments = signal<TaskAttachment[]>([]);
@@ -87,6 +88,7 @@ export class TaskFormComponent implements OnInit {
         this.timeMinutes.set(t.assigned_time_minutes % 60);
         this.assigneeId.set(t.assignee_id);
         this.team.set(t.team ?? '');
+        this.dueDate.set(t.due_at ? t.due_at.split('T')[0] : '');
         this.existingAttachments.set(t.attachments || []);
       } else {
         this.isEditMode.set(false);
@@ -99,6 +101,7 @@ export class TaskFormComponent implements OnInit {
         this.team.set('');
         this.createdDate.set('');
         this.createdTime.set('');
+        this.dueDate.set('');
         this.existingAttachments.set([]);
         this.clearSelectedFile();
 
@@ -153,6 +156,7 @@ export class TaskFormComponent implements OnInit {
       assignee_id: this.assigneeId(),
       team: this.team().trim(),
       created_at: this.getCombinedCreatedAt(),
+      due_at: this.dueDate() ? `${this.dueDate()}T23:59:59` : undefined,
     };
 
     const task = this.task();
@@ -193,11 +197,24 @@ export class TaskFormComponent implements OnInit {
   }
 
   private getCombinedCreatedAt(): string | undefined {
-    if (!this.createdDate()) return undefined;
+    // If both are empty, let server handle it (current datetime)
+    if (!this.createdDate() && !this.createdTime()) return undefined;
     
-    const date = this.createdDate();
-    const time = this.createdTime() || '00:00';
-    return `${date}T${time}:00`;
+    const now = new Date();
+    // Get local date part (YYYY-MM-DD)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const localDate = `${year}-${month}-${date}`;
+
+    // Use selected date or local today's date
+    const datePart = this.createdDate() || localDate;
+    
+    // Use selected time (HH:mm) or current local time
+    // toTimeString() returns something like "13:33:21 GMT+0530"
+    const timePart = this.createdTime() || now.toTimeString().split(' ')[0].substring(0, 5);
+    
+    return `${datePart}T${timePart}:00`;
   }
 
   private completeSubmission(): void {
