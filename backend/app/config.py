@@ -10,10 +10,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from .env file."""
-
-    DATABASE_URL: str = "sqlite:///./taskmanager.db"
-    SECRET_KEY: str = "super-secret-key-change-in-production-abc123xyz"
+    DATABASE_URL: str
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     UPLOAD_DIR: str = "uploads"
