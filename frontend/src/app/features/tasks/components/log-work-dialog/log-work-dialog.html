@@ -58,6 +58,7 @@
                 (input)="updateEntry(i, 'date', $any($event.target).value)"
                 (ngModelChange)="updateEntry(i, 'date', $event)"
                 [name]="'date-' + i"
+                [id]="'log-date-' + i"
               />
             </div>
             
@@ -73,6 +74,7 @@
                 (input)="updateEntry(i, 'startTime', $any($event.target).value)"
                 (ngModelChange)="updateEntry(i, 'startTime', $event)"
                 [name]="'start-' + i"
+                [id]="'log-start-' + i"
               />
             </div>
             <div class="log-work__field">
@@ -87,6 +89,7 @@
                 (input)="updateEntry(i, 'endTime', $any($event.target).value)"
                 (ngModelChange)="updateEntry(i, 'endTime', $event)"
                 [name]="'end-' + i"
+                [id]="'log-end-' + i"
               />
             </div>
             <div class="log-work__duration">
@@ -104,6 +107,7 @@
               [ngModel]="entry.description"
               (ngModelChange)="updateEntry(i, 'description', $event)"
               [name]="'desc-' + i"
+              [id]="'log-desc-' + i"
               rows="2"
               placeholder="Describe the work completed..."
             ></textarea>

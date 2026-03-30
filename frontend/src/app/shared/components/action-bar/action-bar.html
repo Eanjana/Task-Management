@@ -9,6 +9,8 @@
         <svg class="action-bar__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input 
           type="text" 
+          id="searchQuery"
+          name="searchQuery"
           class="action-bar__search-input" 
           placeholder="Search tasks, teams..." 
           [ngModel]="filterService.filters().searchQuery" 
@@ -26,6 +28,7 @@
           @if (activeDropdown() === 'team') {
             <div class="premium-dropdown__menu animate-fade-in animate-scale-in">
               <button class="premium-dropdown__item" (click)="onFilterChange('team', '')" [class.premium-dropdown__item--active]="!filterService.filters().team">All Teams</button>
+              <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Unassigned')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Unassigned'">Unassigned</button>
               <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Frontend')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Frontend'">Frontend</button>
               <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Backend')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Backend'">Backend</button>
               <button class="premium-dropdown__item" (click)="onFilterChange('team', 'Design')" [class.premium-dropdown__item--active]="filterService.filters().team === 'Design'">Design</button>
@@ -61,7 +64,6 @@
             <div class="premium-dropdown__menu animate-fade-in animate-scale-in">
               <button class="premium-dropdown__item" (click)="onFilterChange('assignee', '')" [class.premium-dropdown__item--active]="!filterService.filters().assignee">Assignee</button>
               <button class="premium-dropdown__item" (click)="onFilterChange('assignee', 'Me')" [class.premium-dropdown__item--active]="filterService.filters().assignee === 'Me'">Me</button>
-              <button class="premium-dropdown__item" (click)="onFilterChange('assignee', 'Unassigned')" [class.premium-dropdown__item--active]="filterService.filters().assignee === 'Unassigned'">Unassigned</button>
             </div>
           }
         </div>

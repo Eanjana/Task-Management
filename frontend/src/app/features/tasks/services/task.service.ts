@@ -347,7 +347,7 @@ export class TaskService {
         };
       } else if (diff > 0) {
         return {
-          label: 'Over Budget',
+          label: 'Delayed',
           color: 'danger',
           icon: '↓',
           diffText: this.formatHours(diff, showSeconds),
@@ -357,7 +357,7 @@ export class TaskService {
     } else {
       if (diff > 0) {
         return {
-          label: 'Over Budget',
+          label: 'Delayed',
           color: 'warning',
           icon: '!',
           diffText: this.formatHours(diff, showSeconds),

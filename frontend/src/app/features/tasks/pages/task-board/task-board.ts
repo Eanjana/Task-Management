@@ -57,10 +57,12 @@ export class TaskBoardComponent implements OnInit {
       );
     }
     if (filters.team) {
-      const teamFilter = filters.team.toLowerCase().trim();
-      result = result.filter((t) => 
-        t.team?.toLowerCase().trim().includes(teamFilter)
-      );
+      const q = filters.team.toLowerCase().trim();
+      if (q === 'unassigned') {
+        result = result.filter((t) => !t.team || t.team.trim() === '');
+      } else {
+        result = result.filter((t) => t.team?.toLowerCase()?.includes(q));
+      }
     }
     if (filters.assignee) {
       if (filters.assignee === 'Me') {
@@ -68,11 +70,9 @@ export class TaskBoardComponent implements OnInit {
         if (currentUser) {
           result = result.filter((t) => t.assignee_id === currentUser.id);
         }
-      } else if (filters.assignee === 'Unassigned') {
-        result = result.filter((t) => !t.assignee);
       } else {
         const a = filters.assignee.toLowerCase();
-        result = result.filter((t) => t.assignee?.username.toLowerCase().includes(a));
+        result = result.filter((t) => t.assignee?.username?.toLowerCase()?.includes(a));
       }
     }
     

@@ -80,7 +80,11 @@ export class TaskListComponent implements OnInit {
 
     if (filters.team) {
       const q = filters.team.toLowerCase().trim();
-      allTasks = allTasks.filter((t) => t.team?.toLowerCase().includes(q));
+      if (q === 'unassigned') {
+        allTasks = allTasks.filter((t) => !t.team || t.team.trim() === '');
+      } else {
+        allTasks = allTasks.filter((t) => t.team?.toLowerCase()?.includes(q));
+      }
     }
 
     if (filters.assignee) {
@@ -89,11 +93,9 @@ export class TaskListComponent implements OnInit {
         if (currentUser) {
           allTasks = allTasks.filter((t) => t.assignee_id === currentUser.id);
         }
-      } else if (filters.assignee === 'Unassigned') {
-        allTasks = allTasks.filter((t) => !t.assignee);
       } else {
         const a = filters.assignee.toLowerCase();
-        allTasks = allTasks.filter((t) => t.assignee?.username.toLowerCase().includes(a));
+        allTasks = allTasks.filter((t) => t.assignee?.username?.toLowerCase()?.includes(a));
       }
     }
 
