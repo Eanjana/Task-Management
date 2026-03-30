@@ -51,6 +51,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+backend/venv/
 .env
 
 # Angular/Node
@@ -63,3 +64,14 @@ dist/
 .vscode/
 .idea/
 *.swp
+
+# Database (added)
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+
+
