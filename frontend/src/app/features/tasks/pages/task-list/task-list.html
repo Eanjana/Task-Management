@@ -62,7 +62,7 @@
               (keydown.enter)="openDetailsModal(task)"
               [attr.aria-label]="'View task ' + task.id"
             >
-              <!-- Select All Checkbox (header only - no individual checkboxes) -->
+              <!-- Select All Checkbox -->
               <td class="task-table__cell task-table__cell--checkbox" (click)="$event.stopPropagation()">
                 <input 
                   type="checkbox" 
@@ -73,7 +73,7 @@
                 />
               </td>
 
-              <!-- 3-Dot Action Menu (Left Side) -->
+              <!-- 3-Dot Action Menu -->
               <td class="task-table__cell task-table__cell--actions task-table__cell--actions-left" (click)="$event.stopPropagation()">
                 <div class="dropdown dropdown--left">
                   <button class="btn--dots" (click)="toggleMenu(task.id, $event)" aria-label="Task options">

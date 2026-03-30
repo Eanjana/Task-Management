@@ -6,7 +6,7 @@ Task Pydantic schemas for request/response validation.
 @date 24-03-2026
 """
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -42,6 +42,7 @@ class WorkLogResponse(BaseModel):
     user_id: int
     start_time: str
     end_time: str
+    work_date: date
     seconds_spent: int
     description: str = ""
     user: Optional[WorkLogUserResponse] = None
@@ -55,8 +56,18 @@ class WorkLogCreate(BaseModel):
     """Schema for creating a work log entry."""
     start_time: str
     end_time: str
+    work_date: Optional[date] = None
     seconds_spent: int = Field(ge=0)
     description: str = ""
+
+
+class WorkLogUpdate(BaseModel):
+    """Schema for updating a work log entry."""
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    work_date: Optional[date] = None
+    seconds_spent: Optional[int] = Field(default=None, ge=0)
+    description: Optional[str] = None
 
 
 class ActiveMemberUserResponse(BaseModel):

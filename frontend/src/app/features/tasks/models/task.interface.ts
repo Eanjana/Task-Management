@@ -32,6 +32,7 @@ export interface WorkLog {
   user_id: number;
   start_time: string;
   end_time: string;
+  work_date: string;
   seconds_spent: number;
   description: string;
   user: WorkLogUser | null;
@@ -98,8 +99,17 @@ export interface TaskUpdatePayload {
 export interface WorkLogCreatePayload {
   start_time: string;
   end_time: string;
+  work_date: string;
   seconds_spent: number;
   description: string;
+}
+
+export interface WorkLogUpdatePayload {
+  start_time?: string;
+  end_time?: string;
+  work_date?: string;
+  seconds_spent?: number;
+  description?: string;
 }
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {

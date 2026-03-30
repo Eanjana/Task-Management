@@ -4,7 +4,7 @@
 .task-board-view {
   height: calc(100vh - v.$navbar-height);
   background: var(--clr-bg);
-  padding: 0 v.$spacing-lg 48px; // Significant bottom space
+  padding: 0 v.$spacing-lg v.$spacing-lg; 
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -21,10 +21,11 @@
 .kanban {
   display: flex;
   gap: v.$spacing-lg;
-  flex: 1;
-  padding: v.$spacing-md 0 v.$spacing-lg;
-  min-height: 0;
-  height: 0;
+  padding: v.$spacing-sm 0 v.$spacing-md;
+  height: 75vh; // Strict compact height for single-screen visibility
+  margin: 0 auto;
+  max-width: 1400px;
+  justify-content: center;
 
   &__column {
     flex: 1;
@@ -451,6 +452,7 @@
     background: var(--clr-avatar-bg);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative; // For status indicators
   }
 
   &__unassigned {
@@ -458,6 +460,59 @@
     color: var(--clr-text-muted);
     border: 1px dashed var(--clr-border);
   }
+}
+
+.contributor-stack {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse; // For overlapping effect
+  justify-content: flex-end;
+
+  &__avatar {
+    margin-left: -8px; // Overlap
+    border: 2px solid var(--clr-surface);
+    transition: all v.$transition-base;
+    cursor: default;
+    position: relative; // Critical for pulse-dot positioning
+
+    &:hover {
+      transform: translateY(-2px);
+      z-index: 2;
+      box-shadow: v.$shadow-sm;
+    }
+
+    &--active {
+      z-index: 5; // Active members slightly higher z-index
+    }
+  }
+}
+
+.pulse-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: #16a34a; // Success green
+  border-radius: v.$radius-full;
+  border: 2px solid var(--clr-surface);
+  z-index: 10;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 2px solid #16a34a;
+    animation: active-pulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    opacity: 0;
+  }
+}
+
+@keyframes active-pulse {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
 .priority-indicator {

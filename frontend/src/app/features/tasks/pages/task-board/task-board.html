@@ -132,7 +132,18 @@
                     </div>
                   }
                 </div>
-                @if (task.assignee) {
+                @if (task.active_members && task.active_members.length > 0) {
+                  <div class="contributor-stack">
+                    @for (m of task.active_members; track m.id) {
+                      @if (m.user) {
+                        <div class="task-card__avatar contributor-stack__avatar contributor-stack__avatar--active" [title]="m.user.username + ' is working now'" [style.background-color]="getAvatarColor(m.user.username)">
+                          {{ m.user.username.charAt(0).toUpperCase() }}
+                          <span class="pulse-dot"></span>
+                        </div>
+                      }
+                    }
+                  </div>
+                } @else if (task.assignee) {
                   <div 
                     class="task-card__avatar" 
                     [title]="task.assignee.username"
@@ -206,13 +217,14 @@
                     </div>
                   }
                 </div>
-                @if (task.completed_by) {
-                  <div 
-                    class="task-card__avatar task-card__avatar--done" 
-                    [title]="'Completed by ' + task.completed_by.username"
-                    [style.background-color]="taskService.getAvatarColor(task.completed_by.username)"
-                  >
-                    {{ task.completed_by.username.charAt(0).toUpperCase() }}
+                @let contributors = getContributors(task);
+                @if (contributors.length > 0) {
+                  <div class="contributor-stack">
+                    @for (c of contributors; track c.id) {
+                      <div class="task-card__avatar contributor-stack__avatar" [title]="c.username" [style.background-color]="getAvatarColor(c.username)">
+                        {{ c.username.charAt(0).toUpperCase() }}
+                      </div>
+                    }
                   </div>
                 }
               </div>

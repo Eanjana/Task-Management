@@ -16,7 +16,7 @@ from ..models.task import TaskStatus
 from ..models.user import User
 from ..schemas.task import (
     TaskCreate, TaskUpdate, TaskResponse,
-    WorkLogCreate, WorkLogResponse, ActiveMemberResponse,
+    WorkLogCreate, WorkLogUpdate, WorkLogResponse, ActiveMemberResponse,
 )
 from ..services.auth import get_current_user
 from ..services.task import (
@@ -26,6 +26,7 @@ from ..services.task import (
     update_task,
     delete_task,
     add_work_log,
+    update_work_log,
     delete_work_log,
     get_work_logs,
     start_working,
@@ -73,7 +74,7 @@ def modify_task(
     _current_user: User = Depends(get_current_user),
 ):
     """Update an existing task (partial update)."""
-    return update_task(db, task_id, task_data)
+    return update_task(db, task_id, task_data, current_user_id=_current_user.id)
 
 
 @router.delete("/{task_id}", status_code=204)
@@ -97,6 +98,17 @@ def create_work_log(
 ):
     """Add a work log entry to a task."""
     return add_work_log(db, task_id, current_user.id, log_data)
+
+
+@router.patch("/work-logs/{log_id}", response_model=WorkLogResponse)
+def modify_work_log(
+    log_id: int,
+    log_data: WorkLogUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update a work log entry."""
+    return update_work_log(db, log_id, current_user.id, log_data)
 
 
 @router.get("/{task_id}/work-logs", response_model=List[WorkLogResponse])

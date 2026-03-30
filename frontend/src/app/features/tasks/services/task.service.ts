@@ -15,6 +15,7 @@ import {
   TaskAttachment,
   WorkLog,
   WorkLogCreatePayload,
+  WorkLogUpdatePayload,
   ActiveMember,
 } from '../models/task.interface';
 
@@ -184,6 +185,16 @@ export class TaskService {
   }
 
   /**
+   * @description Update an existing work log entry
+   */
+  updateWorkLog(logId: number, payload: WorkLogUpdatePayload): Observable<WorkLog> {
+    return this.http.patch<WorkLog>(`${environment.apiUrl}/tasks/work-logs/${logId}`, payload).pipe(
+      tap(() => this.loadTasks().subscribe()),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
    * @description Get all work logs for a task
    */
   getWorkLogs(taskId: number): Observable<WorkLog[]> {
@@ -288,6 +299,34 @@ export class TaskService {
   }
 
   /**
+   * @description Get unique contributors for a task (from work logs and active members)
+   */
+  getContributors(task: Task): { id: number, username: string }[] {
+    const contributors = new Map<number, string>();
+    
+    // 1. From work logs
+    task.work_logs?.forEach(log => {
+      if (log.user) {
+        contributors.set(log.user.id, log.user.username);
+      }
+    });
+
+    // 2. From active members
+    task.active_members?.forEach(member => {
+      if (member.user) {
+        contributors.set(member.user.id, member.user.username);
+      }
+    });
+
+    // 3. Fallback to completed_by if not present
+    if (task.completed_by && !contributors.has(task.completed_by.id)) {
+      contributors.set(task.completed_by.id, task.completed_by.username);
+    }
+
+    return Array.from(contributors.entries()).map(([id, username]) => ({ id, username }));
+  }
+
+  /**
    * @description Calculate performance purely against total LOGGED labor effort vs assigned budget.
    */
   getPerformanceInfo(task: Task, showSeconds: boolean = true): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
@@ -303,16 +342,16 @@ export class TaskService {
           label: 'Efficient Completion',
           color: 'success',
           icon: '↑',
-          diffText: this.formatDuration(Math.abs(diff), showSeconds),
-          detail: `Outstanding! Completed with ${this.formatDuration(Math.abs(diff), showSeconds)} of budget remaining.`
+          diffText: this.formatHours(Math.abs(diff), showSeconds),
+          detail: `Outstanding! Completed with ${this.formatHours(Math.abs(diff), showSeconds)} of budget remaining.`
         };
       } else if (diff > 0) {
         return {
           label: 'Over Budget',
           color: 'danger',
           icon: '↓',
-          diffText: this.formatDuration(diff, showSeconds),
-          detail: `Task required ${this.formatDuration(diff, showSeconds)} more effort than estimated.`
+          diffText: this.formatHours(diff, showSeconds),
+          detail: `Task required ${this.formatHours(diff, showSeconds)} more effort than estimated.`
         };
       }
     } else {
@@ -321,8 +360,8 @@ export class TaskService {
           label: 'Over Budget',
           color: 'warning',
           icon: '!',
-          diffText: this.formatDuration(diff, showSeconds),
-          detail: `Currently ${this.formatDuration(diff, showSeconds)} over estimated labor effort.`
+          diffText: this.formatHours(diff, showSeconds),
+          detail: `Currently ${this.formatHours(diff, showSeconds)} over estimated labor effort.`
         };
       }
     }
@@ -363,7 +402,7 @@ export class TaskService {
    * This is used for 'Efficiency Insights' to show if work was fast even if the task was delayed.
    * ONLY shown for completed tasks.
    */
-  getLaborPerformance(task: Task, showSeconds: boolean = true): { isEfficient: boolean, secondsSaved: number, actualWorkSeconds: number, detail: string, title: string } | null {
+  getLaborPerformance(task: Task, showSeconds: boolean = true): { isEfficient: boolean, secondsSaved: number, actualWorkSeconds: number, budgetSeconds: number, detail: string, title: string } | null {
     if (!task.assigned_time_seconds || task.status !== 'completed') return null;
 
     // 1. Sum persisted work logs
@@ -379,14 +418,16 @@ export class TaskService {
         isEfficient: true,
         secondsSaved: diff,
         actualWorkSeconds,
+        budgetSeconds: task.assigned_time_seconds,
         title: 'Outstanding Efficiency',
-        detail: `Exceptional work! Your team mastered the requirements in just ${this.formatDuration(actualWorkSeconds, showSeconds)}, saving ${this.formatDuration(diff, showSeconds)} of planned effort. This high-performance delivery significantly boosts overall project momentum.`
+        detail: `Exceptional work! Your team mastered the requirements in just ${this.formatDuration(actualWorkSeconds, showSeconds)}, saving ${this.formatHours(diff, showSeconds)} of planned effort. This high-performance delivery significantly boosts overall project momentum.`
       };
     } else {
       return {
         isEfficient: false,
         secondsSaved: 0,
         actualWorkSeconds,
+        budgetSeconds: task.assigned_time_seconds,
         title: 'Improvement Opportunity',
         detail: `The actual effort of ${this.formatDuration(actualWorkSeconds, showSeconds)} exceeded the initial estimate of ${this.formatDuration(task.assigned_time_seconds, showSeconds)}. Analyzing the workflow and complexity for this task could help refine future estimations and optimize resource allocation.`
       };

@@ -20,11 +20,13 @@ import { TaskService } from '../../services/task.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { LogWorkDialogComponent } from '../log-work-dialog/log-work-dialog';
+import { WorkLog } from '../../models/task.interface';
 
 @Component({
   selector: 'app-task-details',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, LogWorkDialogComponent],
   templateUrl: './task-details.html',
   styleUrl: './task-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +64,9 @@ export class TaskDetailsComponent {
     const seconds = this.currentTask().assigned_time_seconds;
     return this.taskService.formatHours(seconds);
   });
+
+  /** Unique contributors derived from work logs and active sessions */
+  protected contributors = computed(() => this.taskService.getContributors(this.currentTask()));
 
   /**
    * @description Total time spent formatted as human-readable string
@@ -127,6 +132,24 @@ export class TaskDetailsComponent {
 
   cancelDeleteLog(): void {
     this.logToDelete.set(null);
+  }
+
+  /**
+   * @description Edit a work log
+   */
+  protected editingWorkLog = signal<WorkLog | null>(null);
+
+  editWorkLog(log: WorkLog): void {
+    this.editingWorkLog.set(log);
+  }
+
+  cancelEditLog(): void {
+    this.editingWorkLog.set(null);
+  }
+
+  onLogSaved(): void {
+    this.editingWorkLog.set(null);
+    this.taskService.loadTasks().subscribe(); // Refresh view
   }
 
   deleteWorkLog(): void {

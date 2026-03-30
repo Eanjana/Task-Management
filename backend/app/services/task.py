@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..models.task import Task, TaskStatus
 from ..models.work_log import WorkLog
 from ..models.task_member import ActiveTaskMember
-from ..schemas.task import TaskCreate, TaskUpdate, WorkLogCreate
+from ..schemas.task import TaskCreate, TaskUpdate, WorkLogCreate, WorkLogUpdate
 
 
 def get_all_tasks(
@@ -64,7 +64,7 @@ def create_task(db: Session, task_data: TaskCreate) -> Task:
     return new_task
 
 
-def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Task:
+def update_task(db: Session, task_id: int, task_data: TaskUpdate, current_user_id: Optional[int] = None) -> Task:
     """
     Update an existing task.
 
@@ -78,6 +78,10 @@ def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Task:
         new_status = update_data["status"]
         if new_status == TaskStatus.COMPLETED and task.status != TaskStatus.COMPLETED:
             task.completed_at = datetime.now()
+            # Automatically set completed_by if not provided and we have current_user_id
+            if "completed_by_id" not in update_data and current_user_id:
+                task.completed_by_id = current_user_id
+                
             # Stop all active members and auto-log their time
             active_users = [m.user_id for m in task.active_members]
             for uid in active_users:
@@ -85,6 +89,7 @@ def update_task(db: Session, task_id: int, task_data: TaskUpdate) -> Task:
             task = get_task_by_id(db, task_id) # Refresh
         elif new_status != TaskStatus.COMPLETED and task.status == TaskStatus.COMPLETED:
             task.completed_at = None
+            task.completed_by_id = None
 
     for field, value in update_data.items():
         setattr(task, field, value)
@@ -123,6 +128,7 @@ def add_work_log(db: Session, task_id: int, user_id: int, log_data: WorkLogCreat
         user_id=user_id,
         start_time=log_data.start_time,
         end_time=log_data.end_time,
+        work_date=log_data.work_date or datetime.now().date(),
         seconds_spent=log_data.seconds_spent,
         description=log_data.description,
     )
@@ -137,6 +143,31 @@ def add_work_log(db: Session, task_id: int, user_id: int, log_data: WorkLogCreat
 
     db.commit()
     db.refresh(task)
+    db.refresh(work_log)
+    return work_log
+
+
+def update_work_log(db: Session, log_id: int, user_id: int, log_data: WorkLogUpdate) -> WorkLog:
+    """Update an existing work log entry."""
+    work_log = db.query(WorkLog).filter(WorkLog.id == log_id).first()
+    if not work_log:
+        raise HTTPException(status_code=404, detail="Work log not found")
+    
+    if work_log.user_id != user_id:
+        raise HTTPException(status_code=403, detail="You can only edit your own work logs")
+
+    update_data = log_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(work_log, field, value)
+
+    db.flush()
+    
+    # Recalculate task total
+    task = db.query(Task).filter(Task.id == work_log.task_id).first()
+    if task:
+        task.total_time_spent_seconds = sum(wl.seconds_spent for wl in task.work_logs)
+
+    db.commit()
     db.refresh(work_log)
     return work_log
 
@@ -204,6 +235,7 @@ def stop_working(db: Session, task_id: int, user_id: int) -> None:
             user_id=user_id,
             start_time=started_at.strftime("%H:%M:%S"),
             end_time=now.strftime("%H:%M:%S"),
+            work_date=now.date(),
             seconds_spent=seconds_spent,
             description="Automatic work log from 'Start Working' session"
         )

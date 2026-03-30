@@ -253,4 +253,12 @@ export class TaskBoardComponent implements OnInit {
     if (task.status !== 'completed') return null;
     return this.taskService.getPerformanceInfo(task, false);
   }
+
+  getContributors(task: Task) {
+    return this.taskService.getContributors(task);
+  }
+
+  getAvatarColor(name?: string): string {
+    return this.taskService.getAvatarColor(name);
+  }
 }

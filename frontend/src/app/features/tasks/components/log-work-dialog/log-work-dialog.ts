@@ -8,16 +8,19 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  computed,
   input,
   output,
   DestroyRef,
+  OnInit,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../services/task.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { Task, WorkLogCreatePayload } from '../../models/task.interface';
+import { Task, WorkLog, WorkLogCreatePayload, WorkLogUpdatePayload } from '../../models/task.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
 
 interface WorkEntry {
   date: string;
@@ -34,32 +37,58 @@ interface WorkEntry {
   styleUrl: './log-work-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LogWorkDialogComponent {
+export class LogWorkDialogComponent implements OnInit {
   protected taskService = inject(TaskService);
   private toast = inject(ToastService);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
 
   task = input.required<Task>();
+  logToEdit = input<WorkLog | null>(null);
   closed = output<void>();
   saved = output<void>();
 
   protected isSubmitting = signal(false);
-  protected entries = signal<WorkEntry[]>([
-    { date: new Date().toISOString().split('T')[0], startTime: '00:00', endTime: '00:00', description: '' }
-  ]);
+  protected isEditMode = computed(() => !!this.logToEdit());
+  protected entries = signal<WorkEntry[]>([]);
+
+  ngOnInit(): void {
+    if (this.logToEdit()) {
+      const log = this.logToEdit()!;
+      this.entries.set([{
+        date: log.work_date,
+        startTime: log.start_time,
+        endTime: log.end_time,
+        description: log.description
+      }]);
+    } else {
+      this.entries.set([{
+        date: new Date().toISOString().split('T')[0],
+        startTime: '00:00',
+        endTime: '00:00',
+        description: ''
+      }]);
+    }
+  }
 
   /**
    * @description Add a new empty work entry row
    */
   addEntry(): void {
-    this.entries.update(arr => [...arr, { date: new Date().toISOString().split('T')[0], startTime: '00:00', endTime: '00:00', description: '' }]);
+    if (this.isEditMode()) return;
+    this.entries.update(arr => [...arr, { 
+      date: new Date().toISOString().split('T')[0], 
+      startTime: '00:00', 
+      endTime: '00:00', 
+      description: '' 
+    }]);
   }
 
   /**
    * @description Remove a work entry by index
    */
   removeEntry(index: number): void {
+    if (this.isEditMode()) return;
     this.entries.update(arr => arr.filter((_, i) => i !== index));
   }
 
@@ -111,32 +140,58 @@ export class LogWorkDialogComponent {
     }
 
     this.isSubmitting.set(true);
-    let completedCount = 0;
     const taskId = this.task().id;
     const currentUser = this.authService.currentUser();
+    const logToEdit = this.logToEdit();
 
-    validEntries.forEach(entry => {
+    if (this.isEditMode() && logToEdit) {
+      const entry = validEntries[0];
       const seconds = this.calculateSeconds(entry.startTime, entry.endTime);
-      const payload: WorkLogCreatePayload = {
-        start_time: `${entry.date} ${entry.startTime}`,
-        end_time: `${entry.date} ${entry.endTime}`,
+      const payload: WorkLogUpdatePayload = {
+        start_time: entry.startTime,
+        end_time: entry.endTime,
+        work_date: entry.date,
         seconds_spent: seconds,
         description: entry.description,
       };
 
-      this.taskService.addWorkLog(taskId, payload)
+      this.taskService.updateWorkLog(logToEdit.id, payload)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            completedCount++;
-            if (completedCount === validEntries.length) {
-              // Now update the task to completed with completed_by
-              const updatePayload: any = {
+            this.toast.success('Work log updated');
+            this.isSubmitting.set(false);
+            this.saved.emit();
+          },
+          error: () => {
+            this.toast.error('Failed to update work log');
+            this.isSubmitting.set(false);
+          }
+        });
+    } else {
+      const requests = validEntries.map(entry => {
+        const seconds = this.calculateSeconds(entry.startTime, entry.endTime);
+        const payload: WorkLogCreatePayload = {
+          start_time: entry.startTime,
+          end_time: entry.endTime,
+          work_date: entry.date,
+          seconds_spent: seconds,
+          description: entry.description,
+        };
+        return this.taskService.addWorkLog(taskId, payload);
+      });
+
+      forkJoin(requests)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            if (this.task().status !== 'completed') {
+              const updatePayload = {
                 status: 'completed' as const,
                 completed_by_id: currentUser?.id ?? null,
               };
 
-              this.taskService.updateTask(taskId, updatePayload)
+              this.taskService.updateTask(taskId, updatePayload as any)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                   next: () => {
@@ -150,14 +205,18 @@ export class LogWorkDialogComponent {
                     this.saved.emit();
                   },
                 });
+            } else {
+              this.toast.success('Work logged successfully');
+              this.isSubmitting.set(false);
+              this.saved.emit();
             }
           },
           error: () => {
-            this.toast.error('Failed to log work entry');
+            this.toast.error('Failed to log work entries');
             this.isSubmitting.set(false);
           },
         });
-    });
+    }
   }
 
   /**

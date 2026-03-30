@@ -77,13 +77,13 @@
             <div class="task-details__worker-avatars">
               @for (member of currentTask().active_members; track member.id) {
                 <div
-            class="worker-avatar"
-            [title]="member.user?.username"
-            [style.background-color]="getAvatarColor(member.user?.username)"
-          >
-            {{ member.user?.username?.charAt(0)?.toUpperCase() }}
-            <span class="worker-avatar__name">{{ member.user?.username }}</span>
-          </div>
+                  class="worker-avatar"
+                  [title]="member.user?.username + ' is currently working'"
+                  [style.background-color]="getAvatarColor(member.user?.username)"
+                >
+                  {{ member.user?.username?.charAt(0)?.toUpperCase() }}
+                  <span class="pulse-dot"></span>
+                </div>
               }
             </div>
           </div>
@@ -128,7 +128,7 @@
         <div class="task-details__meta-item">
           <span class="task-details__meta-label">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            CREATED AT
+            Created At
           </span>
           <div class="task-details__created-info">
             <span class="task-details__meta-value">{{ currentTask().created_at | date:'mediumDate' }}</span>
@@ -156,7 +156,7 @@
           </div>
         }
 
-        @if (currentTask().status === 'completed' && currentTask().completed_by) {
+        @if (currentTask().completed_by) {
           <div class="task-details__meta-item">
             <span class="task-details__meta-label">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -170,36 +170,33 @@
         }
       </div>
 
-      <!-- ── Performance Insights ── -->
+      <!-- ── Performance Insight ── -->
       <div class="task-details__banners">
-        <!-- Work Performance -->
-        @if (workPerformanceInfo()) {
-          <div class="performance-banner performance-banner--{{ workPerformanceInfo()?.color }}">
+        @if (laborPerformanceInfo(); as info) {
+          <div class="performance-banner performance-banner--{{ info.isEfficient ? 'success' : 'danger' }}">
             <div class="performance-banner__icon-wrap">
-              <span class="performance-banner__icon">{{ workPerformanceInfo()?.icon }}</span>
-              @if (workPerformanceInfo()?.diffText) {
-                <span class="performance-banner__diff">{{ workPerformanceInfo()?.diffText }}</span>
+              @if (info.isEfficient) {
+                <span class="performance-banner__icon">🚀</span>
+                @if (info.secondsSaved > 0) {
+                  <span class="performance-banner__diff">+{{ taskService.formatDuration(info.secondsSaved) }}</span>
+                }
+              } @else {
+                <span class="performance-banner__icon">⚠️</span>
+                <span class="performance-banner__diff">-{{ taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds) }}</span>
               }
             </div>
             <div class="performance-banner__content">
-              <h4 class="performance-banner__title">{{ workPerformanceInfo()?.label }}</h4>
-              <p class="performance-banner__detail">{{ workPerformanceInfo()?.detail }}</p>
-            </div>
-          </div>
-        }
-
-        <!-- Timeline / Calendar Performance -->
-        @if (timelinePerformanceInfo()) {
-          <div class="performance-banner performance-banner--{{ timelinePerformanceInfo()?.color }}">
-            <div class="performance-banner__icon-wrap">
-              <span class="performance-banner__icon">{{ timelinePerformanceInfo()?.icon }}</span>
-              @if (timelinePerformanceInfo()?.diffText) {
-                <span class="performance-banner__diff">{{ timelinePerformanceInfo()?.diffText }}</span>
-              }
-            </div>
-            <div class="performance-banner__content">
-              <h4 class="performance-banner__title">Timeline: {{ timelinePerformanceInfo()?.label }}</h4>
-              <p class="performance-banner__detail">{{ timelinePerformanceInfo()?.detail }}</p>
+              <h4 class="performance-banner__title">
+                {{ info.isEfficient ? 'Highly Efficient Completion' : 'Budget Overrun' }}
+              </h4>
+              <p class="performance-banner__detail">
+                Resolved in <strong>{{ taskService.formatDuration(info.actualWorkSeconds) }}</strong>. 
+                @if (info.isEfficient) {
+                  Saved <strong>{{ taskService.formatDuration(info.secondsSaved) }}</strong> from original budget.
+                } @else {
+                  Exceeded budget by <strong>{{ taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds) }}</strong>.
+                }
+              </p>
             </div>
           </div>
         }
@@ -218,64 +215,9 @@
         <div class="task-details__section">
           <h2 class="task-details__section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Work Log ({{ currentTask().work_logs.length }} entries)
+            Work Log History ({{ currentTask().work_logs.length }})
           </h2>
-          <div class="work-log-summary">
-            <div class="work-log-summary__total">
-              <span class="work-log-summary__label">Total Time Logged:</span>
-              <span class="work-log-summary__value">{{ taskService.formatDuration(workLogSummary().totalAllUsersSeconds) }}</span>
-            </div>
-            @if (workLogSummary().groupedLogs.length > 0) {
-              <div class="work-log-summary__users">
-                @for (user of workLogSummary().groupedLogs; track user.username) {
-                  <div class="work-log-summary__user-tag">
-                    <span class="avatar-xxs" [style.background-color]="getAvatarColor(user.username)">
-                      {{ user.username.charAt(0).toUpperCase() }}
-                    </span>
-                    <span class="work-log-summary__username">{{ user.username }}</span>
-                    <span class="work-log-summary__user-time">{{ taskService.formatDuration(user.total_seconds) }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- ── Labor Efficiency Insight ── -->
-          @if (laborPerformanceInfo(); as info) {
-            <div class="labor-insight animate-fade-in" [class.labor-insight--efficient]="info.isEfficient">
-              <div class="labor-insight__header">
-                <div class="labor-insight__icon">
-                  @if (info.isEfficient) {
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                  } @else {
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  }
-                </div>
-                <div class="labor-insight__title-meta">
-                  <span class="labor-insight__badge">Efficiency Analysis</span>
-                  <h3 class="labor-insight__title">{{ info.title }}</h3>
-                </div>
-              </div>
-              <div class="labor-insight__content">
-                <p class="labor-insight__detail">{{ info.detail }}</p>
-                <div class="labor-insight__stats">
-                  <div class="labor-insight__stat">
-                    <span class="labor-insight__stat-label">Actual Effort:</span>
-                    <span class="labor-insight__stat-value">{{ taskService.formatDuration(info.actualWorkSeconds) }}</span>
-                  </div>
-                  @if (info.isEfficient && info.secondsSaved > 0) {
-                    <div class="labor-insight__stat">
-                      <span class="labor-insight__stat-label">Total Saved:</span>
-                      <span class="labor-insight__stat-value labor-insight__stat-value--success">−{{ taskService.formatDuration(info.secondsSaved) }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-
-
-          <h3 class="task-details__sub-section-title">Log History</h3>
+          
           <div class="work-log-list">
             @for (log of currentTask().work_logs; track log.id) {
               <div class="work-log-entry">
@@ -287,27 +229,46 @@
                 </div>
                 <div class="work-log-entry__body">
                   <div class="work-log-entry__header">
-                    <span class="work-log-entry__user">{{ log.user?.username || 'Unknown' }}</span>
-                    <span class="work-log-entry__time-range">{{ formatTime12h(log.start_time) }} → {{ formatTime12h(log.end_time) }}</span>
-                    <div class="work-log-entry__meta">
-                      <span class="work-log-entry__duration">{{ taskService.formatDuration(log.seconds_spent) }}</span>
-                      
-                      @if (log.user_id === authService.currentUser()?.id) {
-                        <button class="btn btn--icon btn--xs work-log-entry__delete" (click)="confirmDeleteLog(log.id)" title="Delete your work log">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                        </button>
-                      }
+                    <div class="work-log-entry__primary-row">
+                      <span class="work-log-entry__work-date highlighted-date">Work Date: <strong>{{ log.work_date | date:'mediumDate' }}</strong></span>
+                      <span class="work-log-entry__creation-small">Log added on <em>{{ log.created_at | date:'short' }}</em></span>
+                    </div>
+                    <div class="work-log-entry__user-row">
+                      <span class="work-log-entry__user">{{ log.user?.username || 'Unknown' }}</span>
+                      <span class="work-log-entry__duration-tag">{{ taskService.formatDuration(log.seconds_spent) }}</span>
                     </div>
                   </div>
-                  @if (log.description) {
-                    <p class="work-log-entry__desc">{{ log.description }}</p>
+                  
+                  <div class="work-log-entry__content">
+                    <div class="work-log-entry__time-span">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {{ formatTime12h(log.start_time) }} → {{ formatTime12h(log.end_time) }}
+                    </div>
+                    @if (log.description) {
+                      <p class="work-log-entry__desc">{{ log.description }}</p>
+                    }
+                  </div>
+
+                  @if (log.user_id === authService.currentUser()?.id) {
+                    <div class="work-log-entry__footer-actions">
+                      <button class="btn btn--link btn--xs" (click)="editWorkLog(log)">Edit Log</button>
+                      <button class="btn btn--link btn--xs btn--danger-link" (click)="confirmDeleteLog(log.id)">Delete Log</button>
+                    </div>
                   }
-                  <span class="work-log-entry__date">{{ log.created_at | date:'mediumDate' }}</span>
                 </div>
               </div>
             }
           </div>
         </div>
+
+        @if (editingWorkLog()) {
+          <app-log-work-dialog
+            [task]="currentTask()"
+            [logToEdit]="editingWorkLog()"
+            (closed)="cancelEditLog()"
+            (saved)="onLogSaved()"
+          ></app-log-work-dialog>
+        }
 
         @if (logToDelete()) {
           <div class="confirm-modal-overlay animate-fade-in" (click)="cancelDeleteLog()">

@@ -282,6 +282,28 @@
     margin: 0 auto;
   }
 
+  .contributor-stack {
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse; // For overlapping effect
+    justify-content: center;
+    width: 90px;
+    margin: 0 auto;
+
+    &__avatar {
+      margin-left: -8px; // Overlap
+      border: 2px solid var(--clr-surface);
+      transition: all v.$transition-base;
+      cursor: default;
+
+      &:hover {
+        transform: translateY(-2px);
+        z-index: 2;
+        box-shadow: v.$shadow-sm;
+      }
+    }
+  }
+
   // ── Time column values ──
   &__time-value {
     font-size: v.$font-xs;
