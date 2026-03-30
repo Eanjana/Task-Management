@@ -16,7 +16,7 @@ if settings.DATABASE_URL.startswith("sqlite"):
         settings.DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
     )
 else:
-    engine = create_engine(settings.DATABASE_URL, echo=False)
+    engine = create_engine(settings.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
