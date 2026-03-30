@@ -54,6 +54,7 @@ __pycache__/
 venv/
 backend/venv/
 .env
+backend/.env
 
 # Angular/Node
 node_modules/
