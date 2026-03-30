@@ -47,6 +47,7 @@ Thumbs.db
 
 
 # Python
+uploads/
 __pycache__/
 *.py[cod]
 *$py.class
