@@ -32,7 +32,7 @@ export interface WorkLog {
   user_id: number;
   start_time: string;
   end_time: string;
-  minutes_spent: number;
+  seconds_spent: number;
   description: string;
   user: WorkLogUser | null;
   created_at: string;
@@ -52,8 +52,8 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assigned_time_minutes: number;
-  total_time_spent_minutes: number;
+  assigned_time_seconds: number;
+  total_time_spent_seconds: number;
   assignee_id: number | null;
   completed_by_id: number | null;
   hidden_from_list: boolean;
@@ -74,7 +74,7 @@ export interface TaskCreatePayload {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assigned_time_minutes: number;
+  assigned_time_seconds: number;
   assignee_id: number | null;
   team: string;
   created_at?: string;
@@ -86,8 +86,8 @@ export interface TaskUpdatePayload {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  assigned_time_minutes?: number;
-  total_time_spent_minutes?: number;
+  assigned_time_seconds?: number;
+  total_time_spent_seconds?: number;
   assignee_id?: number | null;
   team?: string;
   completed_by_id?: number | null;
@@ -98,7 +98,7 @@ export interface TaskUpdatePayload {
 export interface WorkLogCreatePayload {
   start_time: string;
   end_time: string;
-  minutes_spent: number;
+  seconds_spent: number;
   description: string;
 }
 

@@ -51,7 +51,7 @@ def create_task(db: Session, task_data: TaskCreate) -> Task:
         description=task_data.description,
         status=task_data.status,
         priority=task_data.priority,
-        assigned_time_minutes=task_data.assigned_time_minutes or 0,
+        assigned_time_seconds=task_data.assigned_time_seconds or 0,
         assignee_id=task_data.assignee_id,
         team=task_data.team,
         created_at=task_data.created_at,
@@ -105,21 +105,35 @@ def delete_task(db: Session, task_id: int) -> None:
 
 def add_work_log(db: Session, task_id: int, user_id: int, log_data: WorkLogCreate) -> WorkLog:
     """Add a work log entry to a task."""
-    task = get_task_by_id(db, task_id)
+    # 0. If this is a manual log (non-automatic), delete existing auto-logs for this user/task 
+    # to prevent double-counting. We match by description pattern.
+    auto_desc = "Automatic work log from 'Start Working' session"
+    if log_data.description != auto_desc:
+        auto_logs = db.query(WorkLog).filter(
+            WorkLog.task_id == task_id,
+            WorkLog.user_id == user_id,
+            WorkLog.description == auto_desc
+        ).all()
+        for al in auto_logs:
+            db.delete(al)
+        db.flush()
+
     work_log = WorkLog(
         task_id=task_id,
         user_id=user_id,
         start_time=log_data.start_time,
         end_time=log_data.end_time,
-        minutes_spent=log_data.minutes_spent,
+        seconds_spent=log_data.seconds_spent,
         description=log_data.description,
     )
     db.add(work_log)
 
-    # Recalculate total time from all work logs
+    # Recalculate total time from all CURRENT work logs (after deletion)
     db.flush()
-    total = sum(wl.minutes_spent for wl in task.work_logs)
-    task.total_time_spent_minutes = total
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if task:
+        total = sum(wl.seconds_spent for wl in task.work_logs)
+        task.total_time_spent_seconds = total
 
     db.commit()
     db.refresh(task)
@@ -182,15 +196,15 @@ def stop_working(db: Session, task_id: int, user_id: int) -> None:
     if started_at:
         now = datetime.now(started_at.tzinfo)
         delta = now - started_at
-        minutes_spent = max(1, int(delta.total_seconds() / 60))
+        seconds_spent = int(delta.total_seconds())
         
         # Create work log
         work_log = WorkLog(
             task_id=task_id,
             user_id=user_id,
-            start_time=started_at.strftime("%H:%M"),
-            end_time=now.strftime("%H:%M"),
-            minutes_spent=minutes_spent,
+            start_time=started_at.strftime("%H:%M:%S"),
+            end_time=now.strftime("%H:%M:%S"),
+            seconds_spent=seconds_spent,
             description="Automatic work log from 'Start Working' session"
         )
         db.add(work_log)
@@ -200,6 +214,28 @@ def stop_working(db: Session, task_id: int, user_id: int) -> None:
     
     task = get_task_by_id(db, task_id)
     if task:
-        task.total_time_spent_minutes = sum(wl.minutes_spent for wl in task.work_logs)
+        task.total_time_spent_seconds = sum(wl.seconds_spent for wl in task.work_logs)
         
     db.commit()
+
+
+def delete_work_log(db: Session, log_id: int):
+    """Delete a work log entry and recalculate task total time."""
+    work_log = db.query(WorkLog).filter(WorkLog.id == log_id).first()
+    if not work_log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Work log not found",
+        )
+    
+    task_id = work_log.task_id
+    db.delete(work_log)
+    db.flush()
+    
+    # Recalculate
+    task = get_task_by_id(db, task_id)
+    if task:
+        task.total_time_spent_seconds = sum(wl.seconds_spent for wl in task.work_logs)
+        
+    db.commit()
+    return True

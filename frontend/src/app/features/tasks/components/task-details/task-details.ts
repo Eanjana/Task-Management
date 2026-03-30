@@ -58,20 +58,17 @@ export class TaskDetailsComponent {
     return this.currentTask().active_members?.some(m => m.user_id === currentUser.id) ?? false;
   });
 
-  /**
-   * @description Assigned time formatted as human-readable string
-   */
   protected formattedAssignedTime = computed(() => {
-    const minutes = this.currentTask().assigned_time_minutes;
-    return this.taskService.formatHours(minutes);
+    const seconds = this.currentTask().assigned_time_seconds;
+    return this.taskService.formatHours(seconds);
   });
 
   /**
    * @description Total time spent formatted as human-readable string
    */
   protected formattedTimeSpent = computed(() => {
-    const minutes = this.currentTask().total_time_spent_minutes;
-    return this.taskService.formatDuration(minutes);
+    const seconds = this.taskService.getWorkingSecondsSpent(this.currentTask());
+    return this.taskService.formatDuration(seconds);
   });
 
   /**
@@ -83,6 +80,73 @@ export class TaskDetailsComponent {
    * @description Calendar performance insight (Timeline vs Assigned)
    */
   protected timelinePerformanceInfo = computed(() => this.taskService.getTimelinePerformance(this.currentTask()));
+
+  /**
+   * @description Labor efficiency insight (Actual Work vs Budget)
+   */
+  protected laborPerformanceInfo = computed(() => this.taskService.getLaborPerformance(this.currentTask()));
+
+  protected workLogSummary = computed(() => {
+    const logs = this.currentTask().work_logs || [];
+    
+    // Group by username
+    const grouped = new Map<string, { total_seconds: number, user_id: number }>();
+    let totalAllUsers = 0;
+
+    for (const log of logs) {
+      if (!log.user) continue;
+      
+      const username = log.user.username;
+      totalAllUsers += log.seconds_spent;
+
+      if (!grouped.has(username)) {
+        grouped.set(username, { total_seconds: 0, user_id: log.user_id });
+      }
+      
+      grouped.get(username)!.total_seconds += log.seconds_spent;
+    }
+
+    return {
+      totalAllUsersSeconds: totalAllUsers,
+      groupedLogs: Array.from(grouped.entries()).map(([username, data]) => ({
+        username,
+        user_id: data.user_id,
+        total_seconds: data.total_seconds
+      })).sort((a, b) => b.total_seconds - a.total_seconds)
+    };
+  });
+
+  /**
+   * @description Delete a work log after confirmation
+   */
+  protected logToDelete = signal<number | null>(null);
+
+  confirmDeleteLog(id: number): void {
+    this.logToDelete.set(id);
+  }
+
+  cancelDeleteLog(): void {
+    this.logToDelete.set(null);
+  }
+
+  deleteWorkLog(): void {
+    const id = this.logToDelete();
+    if (id === null) return;
+
+    this.taskService.deleteWorkLog(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.toast.success('Work log deleted successfully');
+          this.logToDelete.set(null);
+          this.taskService.loadTasks().subscribe(); // Refresh to update totals
+        },
+        error: () => {
+          this.toast.error('Failed to delete work log');
+          this.logToDelete.set(null);
+        }
+      });
+  }
 
   /**
    * @description Start working on the task

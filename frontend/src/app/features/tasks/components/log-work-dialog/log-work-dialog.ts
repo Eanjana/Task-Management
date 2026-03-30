@@ -20,6 +20,7 @@ import { Task, WorkLogCreatePayload } from '../../models/task.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface WorkEntry {
+  date: string;
   startTime: string;
   endTime: string;
   description: string;
@@ -34,7 +35,7 @@ interface WorkEntry {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LogWorkDialogComponent {
-  private taskService = inject(TaskService);
+  protected taskService = inject(TaskService);
   private toast = inject(ToastService);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
@@ -45,14 +46,14 @@ export class LogWorkDialogComponent {
 
   protected isSubmitting = signal(false);
   protected entries = signal<WorkEntry[]>([
-    { startTime: '', endTime: '', description: '' }
+    { date: new Date().toISOString().split('T')[0], startTime: '00:00', endTime: '00:00', description: '' }
   ]);
 
   /**
    * @description Add a new empty work entry row
    */
   addEntry(): void {
-    this.entries.update(arr => [...arr, { startTime: '', endTime: '', description: '' }]);
+    this.entries.update(arr => [...arr, { date: new Date().toISOString().split('T')[0], startTime: '00:00', endTime: '00:00', description: '' }]);
   }
 
   /**
@@ -72,36 +73,31 @@ export class LogWorkDialogComponent {
   }
 
   /**
-   * @description Calculate minutes between two time strings (HH:MM)
+   * @description Calculate seconds between two time strings (HH:MM)
    */
-  calculateMinutes(start: string, end: string): number {
+  calculateSeconds(start: string, end: string): number {
     if (!start || !end) return 0;
     const [sh, sm] = start.split(':').map(Number);
     const [eh, em] = end.split(':').map(Number);
-    const startMins = sh * 60 + sm;
-    const endMins = eh * 60 + em;
-    return Math.max(0, endMins - startMins);
+    const startSecs = sh * 3600 + sm * 60;
+    const endSecs = eh * 3600 + em * 60;
+    return Math.max(0, endSecs - startSecs);
   }
 
   /**
-   * @description Get total minutes from all entries
+   * @description Get total seconds from all entries
    */
-  protected getTotalMinutes(): number {
+  protected getTotalSeconds(): number {
     return this.entries().reduce((sum, entry) => {
-      return sum + this.calculateMinutes(entry.startTime, entry.endTime);
+      return sum + this.calculateSeconds(entry.startTime, entry.endTime);
     }, 0);
   }
 
   /**
-   * @description Format minutes to human-readable string
+   * @description Format seconds to human-readable string
    */
-  protected formatTime(minutes: number): string {
-    if (minutes === 0) return '0m';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    return `${m}m`;
+  protected formatSeconds(seconds: number): string {
+    return this.taskService.formatHours(seconds);
   }
 
   /**
@@ -115,16 +111,16 @@ export class LogWorkDialogComponent {
     }
 
     this.isSubmitting.set(true);
-    let completed = 0;
+    let completedCount = 0;
     const taskId = this.task().id;
     const currentUser = this.authService.currentUser();
 
     validEntries.forEach(entry => {
-      const minutes = this.calculateMinutes(entry.startTime, entry.endTime);
+      const seconds = this.calculateSeconds(entry.startTime, entry.endTime);
       const payload: WorkLogCreatePayload = {
-        start_time: entry.startTime,
-        end_time: entry.endTime,
-        minutes_spent: minutes,
+        start_time: `${entry.date} ${entry.startTime}`,
+        end_time: `${entry.date} ${entry.endTime}`,
+        seconds_spent: seconds,
         description: entry.description,
       };
 
@@ -132,8 +128,8 @@ export class LogWorkDialogComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            completed++;
-            if (completed === validEntries.length) {
+            completedCount++;
+            if (completedCount === validEntries.length) {
               // Now update the task to completed with completed_by
               const updatePayload: any = {
                 status: 'completed' as const,

@@ -42,7 +42,7 @@ class WorkLogResponse(BaseModel):
     user_id: int
     start_time: str
     end_time: str
-    minutes_spent: int
+    seconds_spent: int
     description: str = ""
     user: Optional[WorkLogUserResponse] = None
     created_at: datetime
@@ -55,7 +55,7 @@ class WorkLogCreate(BaseModel):
     """Schema for creating a work log entry."""
     start_time: str
     end_time: str
-    minutes_spent: int = Field(ge=0)
+    seconds_spent: int = Field(ge=0)
     description: str = ""
 
 
@@ -86,7 +86,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = ""
     status: TaskStatus = TaskStatus.TODO
     priority: TaskPriority = TaskPriority.NORMAL
-    assigned_time_minutes: Optional[int] = Field(default=0, ge=0)
+    assigned_time_seconds: Optional[int] = Field(default=0, ge=0)
     assignee_id: Optional[int] = None
     team: Optional[str] = ""
     created_at: Optional[datetime] = None
@@ -100,8 +100,8 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
     priority: Optional[TaskPriority] = None
-    assigned_time_minutes: Optional[int] = Field(default=None, ge=0)
-    total_time_spent_minutes: Optional[int] = Field(default=None, ge=0)
+    assigned_time_seconds: Optional[int] = Field(default=None, ge=0)
+    total_time_spent_seconds: Optional[int] = Field(default=None, ge=0)
     assignee_id: Optional[int] = None
     team: Optional[str] = None
     completed_by_id: Optional[int] = None
@@ -126,8 +126,8 @@ class TaskResponse(BaseModel):
     description: Optional[str] = ""
     status: TaskStatus
     priority: TaskPriority
-    assigned_time_minutes: int
-    total_time_spent_minutes: int
+    assigned_time_seconds: int
+    total_time_spent_seconds: int
     assignee_id: Optional[int] = None
     completed_by_id: Optional[int] = None
     hidden_from_list: bool = False

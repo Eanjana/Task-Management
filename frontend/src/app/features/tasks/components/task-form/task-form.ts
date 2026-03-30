@@ -84,8 +84,8 @@ export class TaskFormComponent implements OnInit {
         this.description.set(t.description ?? '');
         this.status.set(t.status);
         this.priority.set(t.priority);
-        this.timeHours.set(Math.floor(t.assigned_time_minutes / 60));
-        this.timeMinutes.set(t.assigned_time_minutes % 60);
+        this.timeHours.set(Math.floor(t.assigned_time_seconds / 3600));
+        this.timeMinutes.set(Math.floor((t.assigned_time_seconds % 3600) / 60));
         this.assigneeId.set(t.assignee_id);
         this.team.set(t.team ?? '');
         this.dueDate.set(t.due_at ? t.due_at.split('T')[0] : '');
@@ -145,14 +145,14 @@ export class TaskFormComponent implements OnInit {
     if (!this.title().trim()) return;
 
     this.isSubmitting.set(true);
-    const totalMinutes = this.timeHours() * 60 + this.timeMinutes();
+    const totalSeconds = this.timeHours() * 3600 + this.timeMinutes() * 60;
 
     const payload: TaskCreatePayload = {
       title: this.title().trim(),
       description: this.description().trim(),
       status: this.status(),
       priority: this.priority(),
-      assigned_time_minutes: totalMinutes,
+      assigned_time_seconds: totalSeconds,
       assignee_id: this.assigneeId(),
       team: this.team().trim(),
       created_at: this.getCombinedCreatedAt(),

@@ -179,7 +179,7 @@
 
   &__time-row {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr auto;
     gap: v.$spacing-md;
     align-items: flex-end;
   }

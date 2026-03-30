@@ -66,10 +66,10 @@ export class TaskService {
    * @description Enrich task with calculated fields if needed
    */
   private enrichTaskData(task: Task): Task {
-    const calculatedTotal = task.work_logs?.reduce((sum, log) => sum + (log.minutes_spent || 0), 0) || 0;
+    const calculatedTotal = task.work_logs?.reduce((sum, log) => sum + (log.seconds_spent || 0), 0) || 0;
     return {
       ...task,
-      total_time_spent_minutes: calculatedTotal || task.total_time_spent_minutes
+      total_time_spent_seconds: calculatedTotal || task.total_time_spent_seconds
     };
   }
 
@@ -174,6 +174,16 @@ export class TaskService {
   }
 
   /**
+   * @description Delete a work log entry by ID
+   */
+  deleteWorkLog(logId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/tasks/work-logs/${logId}`).pipe(
+      tap(() => this.loadTasks().subscribe()),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
    * @description Get all work logs for a task
    */
   getWorkLogs(taskId: number): Observable<WorkLog[]> {
@@ -190,7 +200,6 @@ export class TaskService {
   startWorking(taskId: number): Observable<ActiveMember> {
     return this.http.post<ActiveMember>(`${environment.apiUrl}/tasks/${taskId}/start-working`, {}).pipe(
       tap(() => {
-        // Reload to get updated task with new active member
         this.loadTasks().subscribe();
       }),
       catchError((err) => throwError(() => err))
@@ -210,136 +219,177 @@ export class TaskService {
   }
 
   /**
-   * @description Format minutes into [D]d [H]h [M]m format
+   * @description Format seconds into [D]d [H]h [M]m [S]s format
    */
-  formatDuration(minutes: number): string {
-    if (!minutes) return '—';
-    const totalMinutes = Math.abs(minutes);
-    const d = Math.floor(totalMinutes / (24 * 60));
-    const h = Math.floor((totalMinutes % (24 * 60)) / 60);
-    const m = totalMinutes % 60;
+  formatDuration(seconds: number, showSeconds: boolean = true): string {
+    if (!seconds && seconds !== 0) return '—';
+    const totalSeconds = Math.abs(seconds);
+    const d = Math.floor(totalSeconds / (24 * 3600));
+    const h = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
 
     const parts: string[] = [];
     if (d > 0) parts.push(`${d}d`);
     if (h > 0) parts.push(`${h}h`);
-    if (m > 0 || parts.length === 0) parts.push(`${m}m`);
+    if (m > 0) parts.push(`${m}m`);
+    if (showSeconds && (s > 0 || parts.length === 0)) {
+      parts.push(`${s}s`);
+    } else if (!showSeconds && parts.length === 0) {
+      parts.push(`${m}m`); // if 0s and showSeconds is false, show 0m
+    }
     
     return parts.join(' ');
   }
 
   /**
-   * @description Format minutes strictly in [H]h [M]m format (prevents days breakdown)
+   * @description Format seconds strictly in [H]h [M]m [S]s format (prevents days breakdown)
    */
-  formatHours(minutes: number): string {
-    if (!minutes) return '—';
-    const totalMinutes = Math.abs(minutes);
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
+  formatHours(seconds: number, showSeconds: boolean = true): string {
+    if (!seconds && seconds !== 0) return '—';
+    const totalSeconds = Math.abs(seconds);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
 
-    if (h > 0 && m > 0) return `${h}h ${m}m`;
-    if (h > 0) return `${h}h`;
-    return `${m}m`;
+    const parts: string[] = [];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    if (showSeconds && (s > 0 || parts.length === 0)) {
+      parts.push(`${s}s`);
+    } else if (!showSeconds && parts.length === 0) {
+      parts.push(`${m}m`);
+    }
+    
+    return parts.join(' ');
   }
 
   /**
-   * @description Calculate performance purely against total logged work elapsed vs assigned budget.
+   * @description Get total actual labor effort (Logged time + Currently active time) in seconds.
+   * This is used for the primary 'Time Taken' and 'Performance' metrics.
    */
-  getPerformanceInfo(task: Task): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
-    if (!task.assigned_time_minutes || !task.total_time_spent_minutes) return null;
+  getWorkingSecondsSpent(task: Task): number {
+    // 1. Sum persisted work logs
+    let totalSeconds = task.work_logs?.reduce((sum, log) => sum + (log.seconds_spent || 0), 0) || 0;
 
-    const spent = task.total_time_spent_minutes;
-    const assigned = task.assigned_time_minutes;
+    // 2. Add active unpersisted sessions for 'In Progress' tasks
+    if (task.status === 'in_progress' && task.active_members?.length) {
+      const now = new Date();
+      for (const member of task.active_members) {
+        if (member.started_at) {
+          const started = new Date(member.started_at);
+          const elapsedMs = now.getTime() - started.getTime();
+          totalSeconds += Math.max(0, Math.floor(elapsedMs / 1000));
+        }
+      }
+    }
+
+    return totalSeconds;
+  }
+
+  /**
+   * @description Calculate performance purely against total LOGGED labor effort vs assigned budget.
+   */
+  getPerformanceInfo(task: Task, showSeconds: boolean = true): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
+    if (!task.assigned_time_seconds) return null;
+
+    const spent = this.getWorkingSecondsSpent(task);
+    const assigned = task.assigned_time_seconds;
     const diff = spent - assigned;
 
     if (task.status === 'completed') {
-      if (diff <= 0) {
+      if (spent > 0 && diff <= 0) {
         return {
-          label: 'Good',
+          label: 'Efficient Completion',
           color: 'success',
           icon: '↑',
-          diffText: this.formatDuration(Math.abs(diff)),
-          detail: `Saved ${this.formatDuration(Math.abs(diff))} against estimate`
+          diffText: this.formatDuration(Math.abs(diff), showSeconds),
+          detail: `Outstanding! Completed with ${this.formatDuration(Math.abs(diff), showSeconds)} of budget remaining.`
         };
-      } else {
+      } else if (diff > 0) {
         return {
-          label: 'Delayed',
+          label: 'Over Budget',
           color: 'danger',
           icon: '↓',
-          diffText: this.formatDuration(diff),
-          detail: `Took ${this.formatDuration(diff)} more than estimated`
+          diffText: this.formatDuration(diff, showSeconds),
+          detail: `Task required ${this.formatDuration(diff, showSeconds)} more effort than estimated.`
         };
       }
     } else {
       if (diff > 0) {
         return {
-          label: 'Delayed',
+          label: 'Over Budget',
           color: 'warning',
           icon: '!',
-          diffText: this.formatDuration(diff),
-          detail: `Currently ${this.formatDuration(diff)} over assigned time`
+          diffText: this.formatDuration(diff, showSeconds),
+          detail: `Currently ${this.formatDuration(diff, showSeconds)} over estimated labor effort.`
         };
       }
-      return null;
+    }
+    return null;
+  }
+
+  /**
+   * @description Calculate chronological timeline duration (Creation to Now/Completion)
+   */
+  getTimelinePerformance(task: Task, showSeconds: boolean = true): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
+    const endTime = task.completed_at ? new Date(task.completed_at) : new Date();
+    const startTime = new Date(task.created_at);
+    const elapsedSeconds = Math.max(0, Math.floor((endTime.getTime() - startTime.getTime()) / 1000));
+
+    const isLate = elapsedSeconds > (task.assigned_time_seconds || 0);
+    
+    if (task.status === 'completed') {
+      return {
+        label: 'Calendar Duration',
+        color: isLate ? 'warning' : 'success',
+        icon: isLate ? '⚠' : '◷',
+        diffText: this.formatDuration(elapsedSeconds, showSeconds),
+        detail: `Task was completed ${this.formatDuration(elapsedSeconds, showSeconds)} after creation.`
+      };
+    } else {
+      return {
+        label: 'Timeline Status',
+        color: isLate ? 'danger' : 'warning',
+        icon: '◷',
+        diffText: this.formatDuration(elapsedSeconds, showSeconds),
+        detail: `Task has been active for ${this.formatDuration(elapsedSeconds, showSeconds)}.`
+      };
     }
   }
 
   /**
-   * @description Calculate extra calendar timeline calculation (Due date / Created date vs current logic)
+   * @description Calculate actual labor effort (sum of all work logs + active sessions) vs assigned budget.
+   * This is used for 'Efficiency Insights' to show if work was fast even if the task was delayed.
+   * ONLY shown for completed tasks.
    */
-  getTimelinePerformance(task: Task): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
-    const endTime = task.completed_at ? new Date(task.completed_at) : new Date();
+  getLaborPerformance(task: Task, showSeconds: boolean = true): { isEfficient: boolean, secondsSaved: number, actualWorkSeconds: number, detail: string, title: string } | null {
+    if (!task.assigned_time_seconds || task.status !== 'completed') return null;
 
-    if (task.due_at) {
-      const dueTime = new Date(task.due_at);
-      const diff = Math.floor((endTime.getTime() - dueTime.getTime()) / (1000 * 60));
-      
-      if (task.status === 'completed') {
-        if (diff > 0) {
-          return { label: 'Completed Late', color: 'danger', icon: '↓', diffText: this.formatDuration(diff), detail: `Overdue by ${this.formatDuration(diff)}` };
-        }
-        return { label: 'Completed Ahead of Schedule', color: 'success', icon: '↑', diffText: this.formatDuration(Math.abs(diff)), detail: `Delivered ${this.formatDuration(Math.abs(diff))} early` };
-      } else {
-        if (diff > 0) {
-          return { label: 'Running Behind Schedule', color: 'warning', icon: '!', diffText: this.formatDuration(diff), detail: `Currently ${this.formatDuration(diff)} past due date` };
-        }
-      }
-      return null;
-    }
+    // 1. Sum persisted work logs
+    const actualWorkSeconds = task.work_logs?.reduce((sum, log) => sum + (log.seconds_spent || 0), 0) || 0;
 
-    if (!task.assigned_time_minutes) return null;
+    if (actualWorkSeconds === 0) return null;
 
-    const startTime = new Date(task.created_at);
-    const elapsedMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-    const diff = elapsedMinutes - task.assigned_time_minutes;
+    const isEfficient = actualWorkSeconds <= task.assigned_time_seconds;
+    const diff = Math.abs(task.assigned_time_seconds - actualWorkSeconds);
 
-    if (task.status === 'completed') {
-      if (diff > 0) {
-        return {
-          label: 'Timeline: Delayed',
-          color: 'danger',
-          icon: '↓',
-          diffText: this.formatDuration(diff),
-          detail: `Task remained open ${this.formatDuration(diff)} beyond assigned time`
-        };
-      }
+    if (isEfficient) {
       return {
-        label: 'Timeline: On Schedule',
-        color: 'success',
-        icon: '↑',
-        diffText: this.formatDuration(Math.abs(diff)),
-        detail: `Completed ${this.formatDuration(Math.abs(diff))} within assigned timeframe`
+        isEfficient: true,
+        secondsSaved: diff,
+        actualWorkSeconds,
+        title: 'Outstanding Efficiency',
+        detail: `Exceptional work! Your team mastered the requirements in just ${this.formatDuration(actualWorkSeconds, showSeconds)}, saving ${this.formatDuration(diff, showSeconds)} of planned effort. This high-performance delivery significantly boosts overall project momentum.`
       };
     } else {
-      if (diff > 0) {
-        return {
-          label: 'Timeline: Running Late',
-          color: 'warning',
-          icon: '!',
-          diffText: this.formatDuration(diff),
-          detail: `Currently ${this.formatDuration(diff)} past assigned timeframe`
-        };
-      }
-      return null;
+      return {
+        isEfficient: false,
+        secondsSaved: 0,
+        actualWorkSeconds,
+        title: 'Improvement Opportunity',
+        detail: `The actual effort of ${this.formatDuration(actualWorkSeconds, showSeconds)} exceeded the initial estimate of ${this.formatDuration(task.assigned_time_seconds, showSeconds)}. Analyzing the workflow and complexity for this task could help refine future estimations and optimize resource allocation.`
+      };
     }
   }
 }

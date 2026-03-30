@@ -2,10 +2,12 @@
 @use '../../../../../assets/scss/helpers/mixins' as m;
 
 .task-board-view {
-  height: calc(100vh - v.$navbar-height - 48px);
+  height: calc(100vh - v.$navbar-height);
   background: var(--clr-bg);
-  padding: 0 v.$spacing-lg v.$spacing-sm;
+  padding: 0 v.$spacing-lg 48px; // Significant bottom space
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .task-board__loading {
@@ -19,13 +21,15 @@
 .kanban {
   display: flex;
   gap: v.$spacing-lg;
-  min-height: 650px;
-  padding-top: v.$spacing-md;
+  flex: 1;
+  padding: v.$spacing-md 0 v.$spacing-lg;
+  min-height: 0;
+  height: 0;
 
   &__column {
     flex: 1;
     min-width: 320px;
-    max-width: 400px;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
     background: var(--clr-bg-alt, #f8f9fa);
@@ -33,6 +37,7 @@
     border: 1px solid var(--clr-border);
     overflow: hidden;
     position: relative;
+    height: 100%;
 
     &::before {
       content: '';
@@ -155,16 +160,32 @@
     flex-direction: column;
     gap: v.$spacing-md;
     overflow-y: auto;
+    
+    // Hide scrollbar by default
     scrollbar-width: none; // Firefox
-    &::-webkit-scrollbar { width: 0; } // Chrome/Safari
+    &::-webkit-scrollbar { 
+      width: 0;
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.04); // Nearly invisible
+      border-radius: 10px;
+    }
 
-    &:hover {
+    // Only show on hover/scroll interaction
+    &:hover, &:active, &:focus {
       scrollbar-width: thin;
-      &::-webkit-scrollbar { width: 6px; }
+      &::-webkit-scrollbar { 
+        width: 6px; 
+      }
+      &::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1); // Slightly visible on hover
+        border-radius: 10px;
+      }
     }
     
     @include m.custom-scrollbar;
-    min-height: 200px;
+    min-height: 0;
     transition: background v.$transition-base;
 
     &.kanban__cards--drag-over {
@@ -474,7 +495,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  z-index: 10000;
+  z-index: v.$z-modal-backdrop;
   @include m.flex-center;
   padding: v.$spacing-md;
 }

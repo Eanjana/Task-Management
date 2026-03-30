@@ -1,11 +1,10 @@
 """
-Database migration script for adding work log support.
+Database migration script for upgrading to high-precision time tracking (seconds).
 
 Handles:
-- Renaming time_taken_minutes -> assigned_time_minutes
-- Adding total_time_spent_minutes, completed_by_id, hidden_from_list columns
-- Creating work_logs table
-- Creating active_task_members table (if not exists)
+- Renaming 'assigned_time_minutes' -> 'assigned_time_seconds' (+ unit conversion)
+- Renaming 'total_time_spent_minutes' -> 'total_time_spent_seconds' (+ unit conversion)
+- Renaming 'work_logs.minutes_spent' -> 'seconds_spent' (+ unit conversion)
 
 Run: python -m app.migrate
 """
@@ -36,52 +35,59 @@ def migrate():
             SELECT column_name FROM information_schema.columns 
             WHERE table_name = 'tasks'
         """)
-        columns = {row[0] for row in cursor.fetchall()}
-        print(f"Existing columns in 'tasks': {columns}")
+        tasks_columns = {row[0] for row in cursor.fetchall()}
+        print(f"Existing columns in 'tasks': {tasks_columns}")
 
-        # 1. Rename time_taken_minutes -> assigned_time_minutes
-        if "time_taken_minutes" in columns and "assigned_time_minutes" not in columns:
-            cursor.execute("ALTER TABLE tasks RENAME COLUMN time_taken_minutes TO assigned_time_minutes")
-            print("✅ Renamed time_taken_minutes -> assigned_time_minutes")
-        elif "assigned_time_minutes" in columns:
-            print("⏭️  assigned_time_minutes already exists")
+        # Check existing columns in work_logs table
+        cursor.execute("""
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_name = 'work_logs'
+        """)
+        logs_columns = {row[0] for row in cursor.fetchall()}
+        print(f"Existing columns in 'work_logs': {logs_columns}")
 
-        # 2. Add total_time_spent_minutes
-        if "total_time_spent_minutes" not in columns:
-            cursor.execute("ALTER TABLE tasks ADD COLUMN total_time_spent_minutes INTEGER DEFAULT 0")
-            print("✅ Added total_time_spent_minutes column")
-        else:
-            print("⏭️  total_time_spent_minutes already exists")
+        # 1. Migrate tasks.assigned_time_minutes -> tasks.assigned_time_seconds
+        if "assigned_time_minutes" in tasks_columns and "assigned_time_seconds" not in tasks_columns:
+            cursor.execute("ALTER TABLE tasks RENAME COLUMN assigned_time_minutes TO assigned_time_seconds")
+            cursor.execute("UPDATE tasks SET assigned_time_seconds = assigned_time_seconds * 60")
+            print("✅ Migrated tasks.assigned_time_minutes -> tasks.assigned_time_seconds (*60)")
+        elif "assigned_time_seconds" in tasks_columns:
+            print("⏭️  tasks.assigned_time_seconds already exists")
 
-        # 3. Add completed_by_id
-        if "completed_by_id" not in columns:
+        # 2. Migrate tasks.total_time_spent_minutes -> tasks.total_time_spent_seconds
+        if "total_time_spent_minutes" in tasks_columns and "total_time_spent_seconds" not in tasks_columns:
+            cursor.execute("ALTER TABLE tasks RENAME COLUMN total_time_spent_minutes TO total_time_spent_seconds")
+            cursor.execute("UPDATE tasks SET total_time_spent_seconds = total_time_spent_seconds * 60")
+            print("✅ Migrated tasks.total_time_spent_minutes -> tasks.total_time_spent_seconds (*60)")
+        elif "total_time_spent_seconds" in tasks_columns:
+            print("⏭️  tasks.total_time_spent_seconds already exists")
+
+        # 3. Migrate work_logs.minutes_spent -> work_logs.seconds_spent
+        if "minutes_spent" in logs_columns and "seconds_spent" not in logs_columns:
+            cursor.execute("ALTER TABLE work_logs RENAME COLUMN minutes_spent TO seconds_spent")
+            cursor.execute("UPDATE work_logs SET seconds_spent = seconds_spent * 60")
+            print("✅ Migrated work_logs.minutes_spent -> work_logs.seconds_spent (*60)")
+        elif "seconds_spent" in logs_columns:
+            print("⏭️  work_logs.seconds_spent already exists")
+
+        # 4. Ensure other necessary columns exist (from previous migrations)
+        if "completed_by_id" not in tasks_columns:
             cursor.execute("ALTER TABLE tasks ADD COLUMN completed_by_id INTEGER REFERENCES users(id)")
             print("✅ Added completed_by_id column")
-        else:
-            print("⏭️  completed_by_id already exists")
-
-        # 4. Add hidden_from_list
-        if "hidden_from_list" not in columns:
+        
+        if "hidden_from_list" not in tasks_columns:
             cursor.execute("ALTER TABLE tasks ADD COLUMN hidden_from_list BOOLEAN DEFAULT false NOT NULL")
             print("✅ Added hidden_from_list column")
-        else:
-            print("⏭️  hidden_from_list already exists")
 
-        # 7. Add completed_at
-        if "completed_at" not in columns:
+        if "completed_at" not in tasks_columns:
             cursor.execute("ALTER TABLE tasks ADD COLUMN completed_at TIMESTAMPTZ")
             print("✅ Added completed_at column")
-        else:
-            print("⏭️  completed_at already exists")
 
-        # 8. Add due_at
-        if "due_at" not in columns:
+        if "due_at" not in tasks_columns:
             cursor.execute("ALTER TABLE tasks ADD COLUMN due_at TIMESTAMPTZ")
             print("✅ Added due_at column")
-        else:
-            print("⏭️  due_at already exists")
 
-        # 5. Create work_logs table if not exists
+        # 5. Ensure tables exist
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS work_logs (
                 id SERIAL PRIMARY KEY,
@@ -89,14 +95,12 @@ def migrate():
                 user_id INTEGER NOT NULL REFERENCES users(id),
                 start_time VARCHAR(20) NOT NULL,
                 end_time VARCHAR(20) NOT NULL,
-                minutes_spent INTEGER NOT NULL DEFAULT 0,
+                seconds_spent INTEGER NOT NULL DEFAULT 0,
                 description TEXT DEFAULT '',
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-        print("✅ work_logs table ready")
-
-        # 6. Create active_task_members table if not exists
+        
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS active_task_members (
                 id SERIAL PRIMARY KEY,
@@ -105,7 +109,6 @@ def migrate():
                 started_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-        print("✅ active_task_members table ready")
 
         conn.commit()
         print("\n🎉 Migration completed successfully!")

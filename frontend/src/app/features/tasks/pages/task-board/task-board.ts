@@ -245,7 +245,12 @@ export class TaskBoardComponent implements OnInit {
     });
   }
 
+  /**
+   * @description Get the performance indicator for a task card.
+   * Only shown for completed tasks.
+   */
   getPerformanceInfo(task: Task) {
-    return this.taskService.getPerformanceInfo(task);
+    if (task.status !== 'completed') return null;
+    return this.taskService.getPerformanceInfo(task, false);
   }
 }

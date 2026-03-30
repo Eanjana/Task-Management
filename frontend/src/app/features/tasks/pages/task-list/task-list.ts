@@ -11,6 +11,7 @@ import {
   computed,
   OnInit,
   DestroyRef,
+  HostListener,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TaskService } from '../../services/task.service';
@@ -122,31 +123,20 @@ export class TaskListComponent implements OnInit {
   }
 
   /**
-   * @description Format the total time taken for a task including active working sessions
+   * @description Format the total time spent for a task including active working sessions.
+   * Only shown for COMPLETED tasks as requested.
    */
   getTimeTaken(task: Task): string {
-    let totalMinutes = task.total_time_spent_minutes || 0;
-
-    // Add elapsed time from currently active members
-    if (task.active_members.length) {
-      const now = new Date();
-      for (const member of task.active_members) {
-        if (member.started_at) {
-          const started = new Date(member.started_at);
-          const elapsedMs = now.getTime() - started.getTime();
-          totalMinutes += Math.max(0, Math.floor(elapsedMs / 60000));
-        }
-      }
-    }
-
-    return this.taskService.formatDuration(totalMinutes);
+    if (task.status !== 'completed') return '';
+    const totalSeconds = this.taskService.getWorkingSecondsSpent(task);
+    return this.taskService.formatDuration(totalSeconds, false);
   }
 
   /**
    * @description Format the assigned time for display
    */
   getAssignTime(task: Task): string {
-    return this.taskService.formatHours(task.assigned_time_minutes);
+    return this.taskService.formatHours(task.assigned_time_seconds, false);
   }
 
   toggleAllSelections(): void {
@@ -199,6 +189,13 @@ export class TaskListComponent implements OnInit {
   toggleMenu(id: number, event: Event): void {
     event.stopPropagation();
     this.activeMenuId.set(this.activeMenuId() === id ? null : id);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.activeMenuId() !== null) {
+      this.closeMenus();
+    }
   }
 
   closeMenus(): void {
@@ -282,6 +279,7 @@ export class TaskListComponent implements OnInit {
   }
 
   getPerformanceInfo(task: Task) {
-    return this.taskService.getPerformanceInfo(task);
+    if (task.status !== 'completed') return null;
+    return this.taskService.getPerformanceInfo(task, false);
   }
 }

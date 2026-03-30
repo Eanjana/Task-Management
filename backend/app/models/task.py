@@ -47,8 +47,8 @@ class Task(Base):
         nullable=False,
         default=TaskPriority.NORMAL,
     )
-    assigned_time_minutes = Column(Integer, nullable=True, default=0)
-    total_time_spent_minutes = Column(Integer, nullable=True, default=0)
+    assigned_time_seconds = Column(Integer, nullable=True, default=0)
+    total_time_spent_seconds = Column(Integer, nullable=True, default=0)
     team = Column(String(100), nullable=True, default="")
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     completed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)

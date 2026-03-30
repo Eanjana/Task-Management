@@ -1,4 +1,4 @@
-<section class="task-list-view" aria-label="Task list view" (click)="closeMenus()">
+<section class="task-list-view" aria-label="Task list view">
 
   <div class="task-list__controls">
     <div class="task-list__count-info">
@@ -41,14 +41,14 @@
             <th class="task-table__th task-table__th--actions"></th>
             <th class="task-table__th task-table__th--id">ID</th>
             <th class="task-table__th task-table__th--title">Task Title</th>
-            <th class="task-table__th">Team</th>
-            <th class="task-table__th">Priority</th>
-            <th class="task-table__th">Status</th>
-            <th class="task-table__th">Assignee</th>
-            <th class="task-table__th">Time Taken</th>
-            <th class="task-table__th">Assign Time</th>
-            <th class="task-table__th">Created At</th>
-            <th class="task-table__th">Performance</th>
+            <th class="task-table__th task-table__th--team">Team</th>
+            <th class="task-table__th task-table__th--priority">Priority</th>
+            <th class="task-table__th task-table__th--status">Status</th>
+            <th class="task-table__th task-table__th--assignee">Assignee</th>
+            <th class="task-table__th task-table__th--date">Created At</th>
+            <th class="task-table__th task-table__th--time-col">Assign Time</th>
+            <th class="task-table__th task-table__th--time-col">Time Taken</th>
+            <th class="task-table__th task-table__th--performance">Performance</th>
           </tr>
         </thead>
         <tbody>
@@ -99,7 +99,7 @@
                 </div>
               </td>
               
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--id">
                 <button class="task-table__id-link" (click)="$event.stopPropagation(); openDetailsModal(task)" type="button" [attr.aria-label]="'Task ID TS-' + task.id">
                   TS-{{ task.id }}
                 </button>
@@ -119,23 +119,23 @@
                 </div>
               </td>
               
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--team">
                 <span class="task-table__team-tag">{{ task.team || 'Unassigned' }}</span>
               </td>
               
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--priority">
                 <span class="badge badge--priority badge--{{ task.priority }}">
                   {{ priorityLabels[task.priority] }}
                 </span>
               </td>
               
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--status">
                 <span class="badge badge--status badge--{{ task.status }}">
                   {{ statusLabels[task.status] }}
                 </span>
               </td>
               
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--assignee">
                 @if (task.assignee) {
                   <div class="task-table__assignee-pill" [title]="task.assignee.username">
                     <span 
@@ -151,14 +151,9 @@
                 }
               </td>
 
-              <!-- Time Taken -->
-              <td class="task-table__cell task-table__cell--time">
-                <span class="task-table__time-value" [class.task-table__time-value--active]="task.active_members.length">
-                  @if (task.active_members.length) {
-                    <span class="working-dot working-dot--pulse-sm" aria-hidden="true"></span>
-                  }
-                  {{ getTimeTaken(task) }}
-                </span>
+              <!-- Created At -->
+              <td class="task-table__cell task-table__cell--date">
+                <span class="task-table__date-value">{{ task.created_at | date:'mediumDate' }}</span>
               </td>
 
               <!-- Assign Time -->
@@ -168,13 +163,15 @@
                 </span>
               </td>
 
-              <!-- Created At -->
-              <td class="task-table__cell task-table__cell--date">
-                <span class="task-table__date-value">{{ task.created_at | date:'mediumDate' }}</span>
+              <!-- Time Taken -->
+              <td class="task-table__cell task-table__cell--time">
+                <span class="task-table__time-value" [class.task-table__time-value--active]="task.status === 'in_progress' && task.active_members.length">
+                  {{ getTimeTaken(task) }}
+                </span>
               </td>
 
               <!-- Performance -->
-              <td class="task-table__cell">
+              <td class="task-table__cell task-table__cell--performance">
                 @let perf = getPerformanceInfo(task);
                 @if (perf) {
                   <div class="perf-compact" [title]="perf.label">

@@ -112,15 +112,17 @@
   }
 
   &__active-workers {
-    @include m.flex-center;
+    display: flex;
+    align-items: center;
     gap: v.$spacing-md;
+    flex-wrap: wrap;
   }
 
   &__section-label {
     font-size: v.$font-xs;
     font-weight: v.$font-semibold;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
     color: var(--clr-text-muted);
   }
 
@@ -229,16 +231,6 @@
     border-left: 3px solid var(--clr-primary-alpha);
   }
 
-  // ── Performance Banner ──
-  &__performance {
-    @include m.flex-center;
-    gap: v.$spacing-md;
-    justify-content: flex-start;
-    padding: v.$spacing-md v.$spacing-lg;
-    border-radius: v.$radius-md;
-    font-size: v.$font-sm;
-  }
-
   // ── Attachments ──
   &__attachments-grid {
     display: grid;
@@ -306,12 +298,129 @@
   }
 }
 
+// ── Labor Efficiency Insight ──
+.labor-insight {
+  margin: v.$spacing-md 0;
+  padding: 24px;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: v.$radius-xl;
+  box-shadow: v.$shadow-sm;
+  transition: all v.$transition-smooth;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--clr-border);
+  }
+
+  &--efficient {
+    background: linear-gradient(to bottom right, #f0fdf4, #ffffff);
+    border-color: #bbf7d0;
+    &::before { background: var(--clr-success); }
+    .labor-insight__icon { color: var(--clr-success); background: #dcfce7; }
+    .labor-insight__badge { background: #dcfce7; color: #166534; }
+  }
+
+  &:not(.labor-insight--efficient) {
+    background: linear-gradient(to bottom right, #fff7ed, #ffffff);
+    border-color: #fed7aa;
+    &::before { background: var(--clr-warning); }
+    .labor-insight__icon { color: var(--clr-warning); background: #ffedd5; }
+    .labor-insight__badge { background: #ffedd5; color: #9a3412; }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    @include m.flex-center;
+    flex-shrink: 0;
+  }
+
+  &__title-meta {
+    @include m.flex-column;
+    gap: 2px;
+  }
+
+  &__badge {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: v.$radius-full;
+    width: fit-content;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--clr-text);
+  }
+
+  &__content {
+    @include m.flex-column;
+    gap: 16px;
+  }
+
+  &__detail {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--clr-text-secondary);
+    margin: 0;
+  }
+
+  &__stats {
+    display: flex;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--clr-divider);
+  }
+
+  &__stat {
+    @include m.flex-column;
+    gap: 2px;
+  }
+
+  &__stat-label {
+    font-size: 11px;
+    font-weight: v.$font-semibold;
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+  }
+
+  &__stat-value {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--clr-text);
+
+    &--success {
+      color: var(--clr-success);
+    }
+  }
+}
+
 // ── Worker Avatar ──
 .working-dot {
   width: 8px;
   height: 8px;
   border-radius: v.$radius-full;
-  background: var(--clr-success);
+  background: var(--clr-warning);
 
   &--pulse {
     animation: pulse 1.5s ease-in-out infinite;
@@ -360,7 +469,7 @@
     right: -1px;
     width: 8px;
     height: 8px;
-    background: var(--clr-success);
+    background: var(--clr-warning);
     border-radius: v.$radius-full;
     border: 1.5px solid var(--clr-surface);
     animation: pulse 1.5s ease-in-out infinite;
@@ -368,6 +477,86 @@
 }
 
 // ── Work Log ──
+.work-log-summary {
+  background: var(--clr-surface-hover);
+  border: 1px solid var(--clr-divider);
+  border-radius: v.$radius-lg;
+  padding: v.$spacing-md v.$spacing-lg;
+  margin-bottom: v.$spacing-md;
+
+  &__total {
+    @include m.flex-center;
+    justify-content: flex-start;
+    gap: v.$spacing-sm;
+    margin-bottom: v.$spacing-md;
+  }
+
+  &__label {
+    font-size: v.$font-sm;
+    color: var(--clr-text-secondary);
+    font-weight: v.$font-medium;
+  }
+
+  &__value {
+    font-size: v.$font-lg;
+    color: var(--clr-primary);
+    font-weight: v.$font-bold;
+  }
+
+  &__users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$spacing-sm;
+    padding-top: v.$spacing-md;
+    border-top: 1px dashed var(--clr-divider);
+  }
+
+  &__user-tag {
+    @include m.flex-center;
+    gap: v.$spacing-xs;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    padding: 2px 8px 2px 2px;
+    border-radius: v.$radius-full;
+    font-size: 11px;
+  }
+
+  &__username {
+    font-weight: v.$font-medium;
+    color: var(--clr-text);
+  }
+
+  &__user-time {
+    font-weight: v.$font-bold;
+    color: var(--clr-primary);
+    background: var(--clr-primary-subtle);
+    padding: 2px 6px;
+    border-radius: v.$radius-full;
+  }
+}
+
+.avatar-xxs {
+  width: 20px;
+  height: 20px;
+  border-radius: v.$radius-full;
+  @include m.flex-center;
+  color: white;
+  font-weight: v.$font-bold;
+  font-size: 9px;
+  border: 1.5px solid var(--clr-surface);
+}
+
+.task-details__sub-section-title {
+  font-size: v.$font-xs;
+  font-weight: v.$font-bold;
+  color: var(--clr-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: v.$spacing-sm;
+  border-bottom: 1px solid var(--clr-divider);
+  padding-bottom: 4px;
+}
+
 .work-log-list {
   @include m.flex-column;
   gap: v.$spacing-md;
@@ -377,7 +566,6 @@
   display: flex;
   gap: v.$spacing-md;
 
-  // Match the HTML change
   &__avatar, .log-row__avatar {
     @include m.flex-center;
     width: 32px;
@@ -399,6 +587,12 @@
     border: 1px solid var(--clr-divider);
     @include m.flex-column;
     gap: 4px;
+    transition: all v.$transition-fast;
+
+    &:hover {
+      border-color: var(--clr-primary-alpha);
+      background: var(--clr-surface);
+    }
   }
 
   &__header {
@@ -419,6 +613,12 @@
     font-family: monospace;
   }
 
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   &__duration {
     font-size: v.$font-xs;
     font-weight: v.$font-bold;
@@ -426,6 +626,24 @@
     background: var(--clr-primary-subtle);
     padding: 1px 6px;
     border-radius: v.$radius-sm;
+  }
+
+  &__delete {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all v.$transition-base;
+    color: var(--clr-text-muted);
+
+    &:hover {
+      color: var(--clr-danger);
+      background: #fef2f2;
+      transform: scale(1.1);
+    }
+  }
+
+  &:hover &__delete {
+    opacity: 1;
+    transform: scale(1);
   }
 
   &__desc {
@@ -490,4 +708,76 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+// ── Confirm Modal ──
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1200; // Above detail modal which is 1000
+  @include m.flex-center;
+  padding: v.$spacing-md;
+}
+
+.confirm-modal {
+  background: var(--clr-surface);
+  border-radius: v.$radius-xl;
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: v.$shadow-xl;
+  border: 1px solid var(--clr-border);
+  animation: modal-slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &__icon {
+    width: 64px;
+    height: 64px;
+    background: #fef2f2;
+    border-radius: v.$radius-full;
+    @include m.flex-center;
+    margin: 0 auto 24px;
+    
+    &--danger {
+      background: rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--clr-text);
+  }
+
+  &__text {
+    font-size: 14px;
+    color: var(--clr-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 32px;
+
+    strong {
+      color: var(--clr-text);
+      word-break: break-word;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      font-weight: v.$font-bold;
+    }
+  }
+}
+
+@keyframes modal-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

@@ -43,7 +43,7 @@
         <div class="task-details__working-banner" [class.task-details__working-banner--active]="isCurrentUserWorking()">
           <div class="task-details__working-info">
             @if (isCurrentUserWorking()) {
-              <span class="working-dot working-dot--pulse"></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span class="working-label">You are currently working on this task</span>
             } @else {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -83,7 +83,6 @@
           >
             {{ member.user?.username?.charAt(0)?.toUpperCase() }}
             <span class="worker-avatar__name">{{ member.user?.username }}</span>
-            <div class="worker-avatar__dot"></div>
           </div>
               }
             </div>
@@ -106,7 +105,7 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Time Spent
           </span>
-          <span class="task-details__meta-value" [class.meta-value--danger]="currentTask().total_time_spent_minutes > currentTask().assigned_time_minutes && currentTask().assigned_time_minutes > 0">
+          <span class="task-details__meta-value" [class.meta-value--danger]="currentTask().total_time_spent_seconds > currentTask().assigned_time_seconds && currentTask().assigned_time_seconds > 0">
             {{ formattedTimeSpent() }}
           </span>
         </div>
@@ -221,30 +220,110 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Work Log ({{ currentTask().work_logs.length }} entries)
           </h2>
+          <div class="work-log-summary">
+            <div class="work-log-summary__total">
+              <span class="work-log-summary__label">Total Time Logged:</span>
+              <span class="work-log-summary__value">{{ taskService.formatDuration(workLogSummary().totalAllUsersSeconds) }}</span>
+            </div>
+            @if (workLogSummary().groupedLogs.length > 0) {
+              <div class="work-log-summary__users">
+                @for (user of workLogSummary().groupedLogs; track user.username) {
+                  <div class="work-log-summary__user-tag">
+                    <span class="avatar-xxs" [style.background-color]="getAvatarColor(user.username)">
+                      {{ user.username.charAt(0).toUpperCase() }}
+                    </span>
+                    <span class="work-log-summary__username">{{ user.username }}</span>
+                    <span class="work-log-summary__user-time">{{ taskService.formatDuration(user.total_seconds) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- ── Labor Efficiency Insight ── -->
+          @if (laborPerformanceInfo(); as info) {
+            <div class="labor-insight animate-fade-in" [class.labor-insight--efficient]="info.isEfficient">
+              <div class="labor-insight__header">
+                <div class="labor-insight__icon">
+                  @if (info.isEfficient) {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                  } @else {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  }
+                </div>
+                <div class="labor-insight__title-meta">
+                  <span class="labor-insight__badge">Efficiency Analysis</span>
+                  <h3 class="labor-insight__title">{{ info.title }}</h3>
+                </div>
+              </div>
+              <div class="labor-insight__content">
+                <p class="labor-insight__detail">{{ info.detail }}</p>
+                <div class="labor-insight__stats">
+                  <div class="labor-insight__stat">
+                    <span class="labor-insight__stat-label">Actual Effort:</span>
+                    <span class="labor-insight__stat-value">{{ taskService.formatDuration(info.actualWorkSeconds) }}</span>
+                  </div>
+                  @if (info.isEfficient && info.secondsSaved > 0) {
+                    <div class="labor-insight__stat">
+                      <span class="labor-insight__stat-label">Total Saved:</span>
+                      <span class="labor-insight__stat-value labor-insight__stat-value--success">−{{ taskService.formatDuration(info.secondsSaved) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+
+          <h3 class="task-details__sub-section-title">Log History</h3>
           <div class="work-log-list">
             @for (log of currentTask().work_logs; track log.id) {
               <div class="work-log-entry">
                 <div
-              class="log-row__avatar"
-              [style.background-color]="getAvatarColor(log.user?.username)"
-            >
-              {{ log.user?.username?.charAt(0)?.toUpperCase() }}
-            </div>
+                  class="log-row__avatar"
+                  [style.background-color]="getAvatarColor(log.user?.username)"
+                >
+                  {{ log.user?.username?.charAt(0)?.toUpperCase() }}
+                </div>
                 <div class="work-log-entry__body">
                   <div class="work-log-entry__header">
                     <span class="work-log-entry__user">{{ log.user?.username || 'Unknown' }}</span>
                     <span class="work-log-entry__time-range">{{ formatTime12h(log.start_time) }} → {{ formatTime12h(log.end_time) }}</span>
-                    <span class="work-log-entry__duration">{{ taskService.formatDuration(log.minutes_spent) }}</span>
+                    <div class="work-log-entry__meta">
+                      <span class="work-log-entry__duration">{{ taskService.formatDuration(log.seconds_spent) }}</span>
+                      
+                      @if (log.user_id === authService.currentUser()?.id) {
+                        <button class="btn btn--icon btn--xs work-log-entry__delete" (click)="confirmDeleteLog(log.id)" title="Delete your work log">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      }
+                    </div>
                   </div>
                   @if (log.description) {
                     <p class="work-log-entry__desc">{{ log.description }}</p>
                   }
-                  <span class="work-log-entry__date">{{ log.created_at | date:'shortDate' }}</span>
+                  <span class="work-log-entry__date">{{ log.created_at | date:'mediumDate' }}</span>
                 </div>
               </div>
             }
           </div>
         </div>
+
+        @if (logToDelete()) {
+          <div class="confirm-modal-overlay animate-fade-in" (click)="cancelDeleteLog()">
+            <div class="confirm-modal" (click)="$event.stopPropagation()">
+              <div class="confirm-modal__icon confirm-modal__icon--danger">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a1.5 1.5 0 0 1 2 2v2"/></svg>
+              </div>
+              <h3 class="confirm-modal__title">Delete Work Log?</h3>
+              <p class="confirm-modal__text">Are you sure you want to delete this work log?<br>This action cannot be undone and will update the total time spent.</p>
+              <div class="confirm-modal__actions">
+                <button class="btn btn--secondary" (click)="cancelDeleteLog()">Cancel</button>
+                <button class="btn btn--danger" (click)="deleteWorkLog()">Delete Log</button>
+              </div>
+            </div>
+          </div>
+        }
       }
 
       <!-- ── Attachments ── -->

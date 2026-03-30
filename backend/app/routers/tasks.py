@@ -26,6 +26,7 @@ from ..services.task import (
     update_task,
     delete_task,
     add_work_log,
+    delete_work_log,
     get_work_logs,
     start_working,
     stop_working,
@@ -128,3 +129,24 @@ def stop_working_on_task(
 ):
     """Remove current user from actively working on a task."""
     stop_working(db, task_id, current_user.id)
+
+
+@router.delete("/work-logs/{log_id}", status_code=204)
+def remove_work_log(
+    log_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a work log entry."""
+    # Find log for ownership check
+    from ..models.work_log import WorkLog
+    from fastapi import HTTPException
+    
+    log = db.query(WorkLog).filter(WorkLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Work log not found")
+    
+    if log.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete your own work logs")
+        
+    delete_work_log(db, log_id)
