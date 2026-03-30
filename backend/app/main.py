@@ -61,3 +61,8 @@ app.include_router(attachments.router)
 def health_check():
     """Health check endpoint."""
     return {"status": "ok", "message": "Task Management API is running"}
+
+
+@app.get("/")
+def root():
+    return {"message": "Task Management API is running"}
