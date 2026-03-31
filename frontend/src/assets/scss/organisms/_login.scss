@@ -57,15 +57,11 @@
     gap: v.$spacing-sm;
     margin-bottom: v.$spacing-xl;
 
-    &-icon {
+    &-img {
       width: 44px;
       height: 44px;
-      @include m.flex-center;
-      background: var(--clr-primary);
-      color: #ffffff;
+      object-fit: contain;
       border-radius: v.$radius-md;
-      font-size: 1.4rem;
-      font-weight: v.$font-bold;
     }
 
     &-text {

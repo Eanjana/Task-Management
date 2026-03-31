@@ -7,12 +7,12 @@
     aria-label="Main navigation"
   >
     <div class="sidebar__header">
-      @if (!sidebarCollapsed()) {
-        <div class="sidebar__brand">
-          <span class="sidebar__brand-icon" aria-hidden="true">T</span>
-          <span class="sidebar__brand-text">TaskFlow</span>
-        </div>
-      }
+      <div class="sidebar__brand">
+        <img src="favicon.png" alt="Logo" class="sidebar__brand-logo" aria-hidden="true">
+        @if (!sidebarCollapsed()) {
+          <span class="sidebar__brand-text">Task Management</span>
+        }
+      </div>
       <button
         class="sidebar__toggle"
         (click)="toggleSidebar()"

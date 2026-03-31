@@ -48,15 +48,11 @@
     gap: v.$spacing-sm;
   }
 
-  &__brand-icon {
-    @include m.flex-center;
+  &__brand-logo {
     width: 32px;
     height: 32px;
-    background: var(--clr-primary);
-    color: #ffffff;
+    object-fit: contain;
     border-radius: v.$radius-sm;
-    font-weight: v.$font-bold;
-    font-size: v.$font-md;
   }
 
   &__brand-text {
