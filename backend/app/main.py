@@ -19,6 +19,9 @@ from .models import User, Task, Attachment, WorkLog, ActiveTaskMember  # Ensure 
 from .routers import auth, tasks, attachments
 
 
+# -------------------------
+# Lifespan (startup)
+# -------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create database tables on startup."""
@@ -27,6 +30,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# -------------------------
+# App Initialization
+# -------------------------
 app = FastAPI(
     title="Task Management API",
     description="A modern task management platform API",
@@ -34,35 +40,54 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow Angular dev server
+
+# -------------------------
+# ✅ CORS CONFIG (FIXED)
+# -------------------------
+origins = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+
+    # ✅ YOUR DEPLOYED FRONTEND (IMPORTANT)
+    "https://task-management-omega-vert.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200",
-        "http://127.0.0.1:4200",
-        "http://localhost",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve uploaded files
+
+# -------------------------
+# Static Files (Uploads)
+# -------------------------
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
-# Register routers
+
+# -------------------------
+# Routers
+# -------------------------
 app.include_router(auth.router)
 app.include_router(tasks.router)
 app.include_router(attachments.router)
 
 
+# -------------------------
+# Health Check
+# -------------------------
 @app.get("/api/health")
 def health_check():
     """Health check endpoint."""
     return {"status": "ok", "message": "Task Management API is running"}
 
 
+# -------------------------
+# Root
+# -------------------------
 @app.get("/")
 def root():
     return {"message": "Task Management API is running"}
