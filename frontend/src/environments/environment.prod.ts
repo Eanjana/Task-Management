@@ -1,10 +1,10 @@
 /**
  * @description Production environment configuration
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  uploadUrl: '/uploads',
+  apiUrl: 'https://task-management-i48j.onrender.com/api',
+  uploadUrl: 'https://task-management-i48j.onrender.com/uploads',
 };

@@ -1,6 +1,6 @@
 /**
  * @description Development environment configuration
- * @author Developer
+ * @author Anjana E
  * @date 24-03-2026
  */
 export const environment = {
