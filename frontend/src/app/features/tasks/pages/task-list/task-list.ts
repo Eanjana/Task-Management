@@ -138,7 +138,7 @@ export class TaskListComponent implements OnInit {
    * @description Format the assigned time for display
    */
   getAssignTime(task: Task): string {
-    return this.taskService.formatHours(task.assigned_time_seconds, false);
+    return this.taskService.formatTaskBudget(task);
   }
 
   toggleAllSelections(): void {

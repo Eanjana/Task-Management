@@ -489,8 +489,9 @@
 
   &__preview {
     display: block;
-    height: 90px;
+    height: 100px;
     overflow: hidden;
+    position: relative;
 
     img {
       width: 100%;
@@ -498,8 +499,25 @@
       object-fit: cover;
       transition: v.$transition-smooth;
     }
+  }
 
-    &:hover img { transform: scale(1.08); }
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    @include m.flex-center;
+    gap: v.$spacing-md;
+    opacity: 0;
+    transition: all v.$transition-base;
+    backdrop-filter: blur(2px);
+  }
+
+  &:hover &__overlay {
+    opacity: 1;
+  }
+
+  &:hover &__preview img {
+    transform: scale(1.1);
   }
 
   &__info {

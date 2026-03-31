@@ -230,27 +230,88 @@ export class TaskService {
   }
 
   /**
-   * @description Format seconds into [D]d [H]h [M]m [S]s format
+   * @description Format seconds into [MO]mo [W]w [D]d [H]h [M]m [S]s format
+   * Scales up to months and weeks. 1 month = 28 days (4 weeks) for clean work scaling.
+   * @param limit If provided, limits output to the top N significant units.
    */
-  formatDuration(seconds: number, showSeconds: boolean = true): string {
-    if (!seconds && seconds !== 0) return '—';
+  formatDuration(seconds: number, showSeconds: boolean = false, limit: number = 3): string {
+    const parts = this.calculateDurationParts(seconds, showSeconds);
+    if (parts.length === 0) return '0m';
+
+    // Return the top N significant parts
+    return parts.slice(0, limit).map(p => `${p.val}${p.unit}`).join(' ');
+  }
+
+  /**
+   * @description Internal helper to calculate all non-zero units for duration breakdown.
+   */
+  private calculateDurationParts(seconds: number, showSeconds: boolean = false): { val: number, unit: string }[] {
+    if (!seconds && seconds !== 0) return [];
     const totalSeconds = Math.abs(seconds);
-    const d = Math.floor(totalSeconds / (24 * 3600));
+    
+    // 1mo = 28 days
+    const mo = Math.floor(totalSeconds / (28 * 24 * 3600));
+    const w = Math.floor((totalSeconds % (28 * 24 * 3600)) / (7 * 24 * 3600));
+    const d = Math.floor((totalSeconds % (7 * 24 * 3600)) / (24 * 3600));
     const h = Math.floor((totalSeconds % (24 * 3600)) / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = Math.floor(totalSeconds % 60);
 
-    const parts: string[] = [];
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (showSeconds && (s > 0 || parts.length === 0)) {
-      parts.push(`${s}s`);
-    } else if (!showSeconds && parts.length === 0) {
-      parts.push(`${m}m`); // if 0s and showSeconds is false, show 0m
-    }
+    const parts: { val: number, unit: string }[] = [];
+    if (mo > 0) parts.push({ val: mo, unit: 'mo' });
+    if (w > 0) parts.push({ val: w, unit: 'w' });
+    if (d > 0) parts.push({ val: d, unit: 'd' });
+    if (h > 0) parts.push({ val: h, unit: 'h' });
+    if (m > 0) parts.push({ val: m, unit: 'm' });
     
-    return parts.join(' ');
+    if (showSeconds && s > 0) {
+      parts.push({ val: s, unit: 's' });
+    }
+    return parts;
+  }
+
+  /**
+   * @description Returns a hierarchical duration breakdown for professional UI.
+   * Separates the primary big-picture units from the precise minor ones.
+   */
+  getDurationBreakdown(seconds: number, majorLimit: number = 2): { major: string, minor: string } {
+    const allParts = this.calculateDurationParts(seconds, false);
+    if (allParts.length === 0) return { major: '0m', minor: '' };
+
+    const majorParts = allParts.slice(0, majorLimit);
+    const minorParts = allParts.slice(majorLimit);
+
+    return {
+      major: majorParts.map(p => `${p.val}${p.unit}`).join(' '),
+      minor: minorParts.map(p => `${p.val}${p.unit}`).join(' ')
+    };
+  }
+
+  /**
+   * @description Formats the task's assigned time budget.
+   * Uses precise hour/min formatting if manual budget was set.
+   * Uses human-friendly scale (mo/w/d) if it uses a due-date fallback.
+   */
+  formatTaskBudget(task: Task, limit: number = 2): string {
+    if (!task) return '—';
+    if (task.assigned_time_seconds > 0) {
+      return this.formatHours(task.assigned_time_seconds, false);
+    } 
+    
+    const effectiveSeconds = this.getEffectiveBudget(task);
+    if (effectiveSeconds === 0) return '—';
+    
+    return this.formatDuration(effectiveSeconds, false, limit);
+  }
+
+  /**
+   * @description Formats difference/performance values based on task budget type.
+   */
+  private formatDiff(task: Task, seconds: number, showSeconds: boolean = false): string {
+    if (task.assigned_time_seconds > 0) {
+      return this.formatHours(Math.abs(seconds), showSeconds);
+    }
+    return this.formatDuration(Math.abs(seconds), showSeconds);
   }
 
   /**
@@ -273,6 +334,21 @@ export class TaskService {
     }
     
     return parts.join(' ');
+  }
+
+  /**
+   * @description Get effective budget for a task (manual assigned time or derived from due date)
+   */
+  getEffectiveBudget(task: Task): number {
+    if (task.assigned_time_seconds && task.assigned_time_seconds > 0) {
+      return task.assigned_time_seconds;
+    }
+    if (task.due_at) {
+      const start = new Date(task.created_at);
+      const end = new Date(task.due_at);
+      return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
+    }
+    return 0;
   }
 
   /**
@@ -330,38 +406,41 @@ export class TaskService {
    * @description Calculate performance purely against total LOGGED labor effort vs assigned budget.
    */
   getPerformanceInfo(task: Task, showSeconds: boolean = true): { color: string, icon: string, label: string, diffText: string, detail: string } | null {
-    if (!task.assigned_time_seconds) return null;
+    const assigned = this.getEffectiveBudget(task);
+    if (!assigned) return null;
 
     const spent = this.getWorkingSecondsSpent(task);
-    const assigned = task.assigned_time_seconds;
     const diff = spent - assigned;
 
     if (task.status === 'completed') {
       if (spent > 0 && diff <= 0) {
+        const val = this.formatDiff(task, diff, showSeconds);
         return {
           label: 'Efficient Completion',
           color: 'success',
           icon: '↑',
-          diffText: this.formatHours(Math.abs(diff), showSeconds),
-          detail: `Outstanding! Completed with ${this.formatHours(Math.abs(diff), showSeconds)} of budget remaining.`
+          diffText: val,
+          detail: `Outstanding! Completed with ${val} of budget remaining.`
         };
       } else if (diff > 0) {
+        const val = this.formatDiff(task, diff, showSeconds);
         return {
           label: 'Delayed',
           color: 'danger',
           icon: '↓',
-          diffText: this.formatHours(diff, showSeconds),
-          detail: `Task required ${this.formatHours(diff, showSeconds)} more effort than estimated.`
+          diffText: val,
+          detail: `Task required ${val} more effort than estimated.`
         };
       }
     } else {
       if (diff > 0) {
+        const val = this.formatDiff(task, diff, showSeconds);
         return {
           label: 'Delayed',
           color: 'warning',
           icon: '!',
-          diffText: this.formatHours(diff, showSeconds),
-          detail: `Currently ${this.formatHours(diff, showSeconds)} over estimated labor effort.`
+          diffText: val,
+          detail: `Currently ${val} over estimated labor effort.`
         };
       }
     }
@@ -376,7 +455,8 @@ export class TaskService {
     const startTime = new Date(task.created_at);
     const elapsedSeconds = Math.max(0, Math.floor((endTime.getTime() - startTime.getTime()) / 1000));
 
-    const isLate = elapsedSeconds > (task.assigned_time_seconds || 0);
+    const assigned = this.getEffectiveBudget(task);
+    const isLate = assigned > 0 ? elapsedSeconds > assigned : false;
     
     if (task.status === 'completed') {
       return {
@@ -403,15 +483,16 @@ export class TaskService {
    * ONLY shown for completed tasks.
    */
   getLaborPerformance(task: Task, showSeconds: boolean = true): { isEfficient: boolean, secondsSaved: number, actualWorkSeconds: number, budgetSeconds: number, detail: string, title: string } | null {
-    if (!task.assigned_time_seconds || task.status !== 'completed') return null;
+    const budgetSeconds = this.getEffectiveBudget(task);
+    if (!budgetSeconds || task.status !== 'completed') return null;
 
     // 1. Sum persisted work logs
     const actualWorkSeconds = task.work_logs?.reduce((sum, log) => sum + (log.seconds_spent || 0), 0) || 0;
 
     if (actualWorkSeconds === 0) return null;
 
-    const isEfficient = actualWorkSeconds <= task.assigned_time_seconds;
-    const diff = Math.abs(task.assigned_time_seconds - actualWorkSeconds);
+    const isEfficient = actualWorkSeconds <= budgetSeconds;
+    const diff = Math.abs(budgetSeconds - actualWorkSeconds);
 
     if (isEfficient) {
       return {

@@ -74,12 +74,14 @@ export class TaskFormComponent implements OnInit {
   protected readonly uploadUrl = environment.uploadUrl;
 
   protected isEditMode = signal(false);
+  private initialStatus: TaskStatus | null = null;
 
   constructor() {
     effect(() => {
       const t = this.task();
       if (t) {
         this.isEditMode.set(true);
+        this.initialStatus = t.status;
         this.title.set(t.title);
         this.description.set(t.description ?? '');
         this.status.set(t.status);
@@ -104,6 +106,7 @@ export class TaskFormComponent implements OnInit {
         this.dueDate.set('');
         this.existingAttachments.set([]);
         this.clearSelectedFile();
+        this.initialStatus = null;
 
         // Auto-assign to current user on create
         const currentUser = this.authService.currentUser();
@@ -170,7 +173,10 @@ export class TaskFormComponent implements OnInit {
             if (this.selectedFile()) {
               this.taskService.uploadAttachment(updated.id, this.selectedFile()!)
                 .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe(() => this.completeSubmission());
+                .subscribe(() => {
+                  this.taskService.loadTasks().subscribe(); // Refresh to get attachment metadata
+                  this.completeSubmission();
+                });
             } else {
               this.completeSubmission();
             }
@@ -186,7 +192,10 @@ export class TaskFormComponent implements OnInit {
             if (this.selectedFile()) {
               this.taskService.uploadAttachment(created.id, this.selectedFile()!)
                 .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe(() => this.completeSubmission());
+                .subscribe(() => {
+                  this.taskService.loadTasks().subscribe(); // Refresh to get attachment metadata
+                  this.completeSubmission();
+                });
             } else {
               this.completeSubmission();
             }
@@ -218,14 +227,31 @@ export class TaskFormComponent implements OnInit {
   }
 
   private completeSubmission(): void {
-    this.toast.success(this.isEditMode() ? 'Task updated' : 'Task created');
+    const isNowCompleted = this.status() === 'completed';
+    const wasAlreadyCompleted = this.initialStatus === 'completed';
+
+    if (!this.isEditMode()) {
+      this.toast.success('Task created successfully!');
+    } else if (isNowCompleted && !wasAlreadyCompleted) {
+      this.toast.success('Task completed successfully!');
+    } else {
+      this.toast.success('Task updated successfully!');
+    }
+    
     this.isSubmitting.set(false);
     this.saved.emit();
   }
 
   protected getAttachmentUrl(path: string): string {
+    if (!path) return '';
+    // If it's already a full URL (Supabase), return as is
+    if (path.startsWith('http')) return path;
+    
+    // Original local logic
     const normalizedPath = path.replace(/\\/g, '/');
-    const pathAfterUploads = normalizedPath.split('uploads/').pop() || '';
+    const pathAfterUploads = normalizedPath.includes('uploads/') 
+      ? (normalizedPath.split('uploads/').pop() || '')
+      : normalizedPath;
     return `${environment.uploadUrl}/${pathAfterUploads}`;
   }
 

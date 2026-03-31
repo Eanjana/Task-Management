@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     UPLOAD_DIR: str = "uploads"
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
 
     class Config:
         env_file = ".env"
@@ -22,3 +24,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Global Supabase client
+supabase = None
+if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+    try:
+        from supabase import create_client
+        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+    except ImportError:
+        pass

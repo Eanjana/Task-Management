@@ -100,8 +100,29 @@ def update_task(db: Session, task_id: int, task_data: TaskUpdate, current_user_i
 
 
 def delete_task(db: Session, task_id: int) -> None:
-    """Delete a task by ID."""
+    """Delete a task by ID including its attachments from cloud storage."""
+    from ..config import supabase
+    import os
+    
     task = get_task_by_id(db, task_id)
+    
+    # 1. Cleanup Attachments from Storage
+    for att in task.attachments:
+        if supabase and "supabase.co" in att.file_path:
+            try:
+                # Extract bucket path (/task_id/filename.ext)
+                parts = att.file_path.split("/")
+                storage_path = f"{parts[-2]}/{parts[-1]}"
+                supabase.storage.from_("attachments").remove([storage_path])
+            except Exception as e:
+                print(f"Failed to cleanup task attachment from Supabase: {e}")
+        elif os.path.exists(att.file_path):
+            try:
+                os.remove(att.file_path)
+            except:
+                pass
+                
+    # 2. Delete from Database
     db.delete(task)
     db.commit()
 

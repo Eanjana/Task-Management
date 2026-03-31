@@ -135,8 +135,8 @@
 
       <!-- Assignee -->
       <div class="task-modal__field">
-        <label class="task-modal__label" for="task-assignee">Assignee</label>
         @if (isEditMode()) {
+          <label class="task-modal__label" for="task-assignee">Assignee</label>
           <select
             class="task-modal__select"
             id="task-assignee"
@@ -150,6 +150,7 @@
             }
           </select>
         } @else {
+          <span class="task-modal__label">Assignee</span>
           <div class="task-modal__read-only-box">
              Assigned to Me (Current User)
           </div>
@@ -187,7 +188,7 @@
 
       <!-- Attachments -->
       <div class="task-modal__field">
-        <label class="task-modal__label">Attachment</label>
+        <span class="task-modal__label">Attachment</span>
         <div class="task-modal__attachments">
           <!-- Existing attachments (edit mode) -->
           @if (isEditMode() && existingAttachments().length) {
@@ -198,6 +199,7 @@
                     class="task-modal__thumbnail"
                     [src]="getAttachmentUrl(att.file_path)"
                     [alt]="att.file_name"
+                    crossorigin="anonymous"
                   />
                   <button 
                     class="attachment-thumb__remove" 

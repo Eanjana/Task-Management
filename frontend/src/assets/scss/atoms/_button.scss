@@ -101,6 +101,33 @@
     border-radius: v.$radius-md;
   }
 
+  &--glass {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  &--glass-primary {
+    background: rgba(var(--clr-primary-rgb), 0.25);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(var(--clr-primary-rgb), 0.3);
+    color: var(--clr-primary);
+
+    &:hover:not(:disabled) {
+      background: rgba(var(--clr-primary-rgb), 0.35);
+      transform: translateY(-2px);
+    }
+  }
+
   // ── Sizes ──
   &--sm {
     padding: 4px v.$spacing-sm;

@@ -238,6 +238,13 @@ export class TaskBoardComponent implements OnInit {
       .updateTask(task.id, payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
+        next: () => {
+          if (newStatus === 'completed' && task.status !== 'completed') {
+            this.toast.success('Task marked as completed!');
+          } else {
+            this.toast.success('Task updated successfully!');
+          }
+        },
         error: () => {
           // Revert optimistic update
           this.taskService.loadTasks().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();

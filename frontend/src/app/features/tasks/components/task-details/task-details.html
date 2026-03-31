@@ -173,16 +173,20 @@
       <!-- ── Performance Insight ── -->
       <div class="task-details__banners">
         @if (laborPerformanceInfo(); as info) {
+          @let actual = taskService.formatDuration(info.actualWorkSeconds, false, 10);
+          @let saved = taskService.formatDuration(info.secondsSaved, false, 10);
+          @let over = taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds, false, 10);
+          
           <div class="performance-banner performance-banner--{{ info.isEfficient ? 'success' : 'danger' }}">
             <div class="performance-banner__icon-wrap">
               @if (info.isEfficient) {
                 <span class="performance-banner__icon">🚀</span>
                 @if (info.secondsSaved > 0) {
-                  <span class="performance-banner__diff">+{{ taskService.formatDuration(info.secondsSaved) }}</span>
+                  <span class="performance-banner__diff">+{{ taskService.formatDuration(info.secondsSaved, false, 2) }}</span>
                 }
               } @else {
                 <span class="performance-banner__icon">⚠️</span>
-                <span class="performance-banner__diff">-{{ taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds) }}</span>
+                <span class="performance-banner__diff">-{{ taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds, false, 2) }}</span>
               }
             </div>
             <div class="performance-banner__content">
@@ -190,13 +194,26 @@
                 {{ info.isEfficient ? 'Highly Efficient Completion' : 'Budget Overrun' }}
               </h4>
               <p class="performance-banner__detail">
-                Resolved in <strong>{{ taskService.formatDuration(info.actualWorkSeconds) }}</strong>. 
+                Resolved in <strong>{{ actual }}</strong>. 
                 @if (info.isEfficient) {
-                  Saved <strong>{{ taskService.formatDuration(info.secondsSaved) }}</strong> from original budget.
+                  Saved <strong>{{ saved }}</strong> from original budget.
                 } @else {
-                  Exceeded budget by <strong>{{ taskService.formatDuration(info.actualWorkSeconds - info.budgetSeconds) }}</strong>.
+                  Exceeded budget by <strong>{{ over }}</strong>.
                 }
               </p>
+            </div>
+          </div>
+        }
+
+        @if (timelinePerformanceInfo(); as info) {
+          <div class="performance-banner performance-banner--{{ info.color }}">
+            <div class="performance-banner__icon-wrap">
+              <span class="performance-banner__icon">{{ info.icon }}</span>
+              <span class="performance-banner__diff">{{ info.diffText }}</span>
+            </div>
+            <div class="performance-banner__content">
+              <h4 class="performance-banner__title">{{ info.label }}</h4>
+              <p class="performance-banner__detail">{{ info.detail }}</p>
             </div>
           </div>
         }
@@ -297,9 +314,26 @@
           <div class="task-details__attachments-grid">
             @for (file of currentTask().attachments; track file.id) {
               <div class="attachment-card">
-                <a [href]="getAttachmentUrl(file.file_path)" target="_blank" rel="noopener noreferrer" class="attachment-card__preview">
-                  <img [src]="getAttachmentUrl(file.file_path)" [alt]="file.file_name" />
-                </a>
+                <div class="attachment-card__preview">
+                  <img [src]="getAttachmentUrl(file.file_path)" [alt]="file.file_name" crossorigin="anonymous" />
+                  <div class="attachment-card__overlay">
+                    <button 
+                      class="btn btn--icon btn--glass" 
+                      (click)="downloadFile(getAttachmentUrl(file.file_path), file.file_name)"
+                      title="Download Attachment"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                    <a 
+                      [href]="getAttachmentUrl(file.file_path)" 
+                      target="_blank" 
+                      class="btn btn--icon btn--glass"
+                      title="View Full Image"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+                </div>
                 <div class="attachment-card__info">
                   <span class="attachment-card__name">{{ file.file_name }}</span>
                   <span class="attachment-card__date">{{ file.created_at | date:'shortDate' }}</span>

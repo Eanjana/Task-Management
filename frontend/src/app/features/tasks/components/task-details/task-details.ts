@@ -61,8 +61,7 @@ export class TaskDetailsComponent {
   });
 
   protected formattedAssignedTime = computed(() => {
-    const seconds = this.currentTask().assigned_time_seconds;
-    return this.taskService.formatHours(seconds);
+    return this.taskService.formatTaskBudget(this.currentTask(), 10);
   });
 
   /** Unique contributors derived from work logs and active sessions */
@@ -73,7 +72,7 @@ export class TaskDetailsComponent {
    */
   protected formattedTimeSpent = computed(() => {
     const seconds = this.taskService.getWorkingSecondsSpent(this.currentTask());
-    return this.taskService.formatDuration(seconds);
+    return this.taskService.formatDuration(seconds, false, 10);
   });
 
   /**
@@ -232,9 +231,39 @@ export class TaskDetailsComponent {
    * @description Get full URL for file attachment
    */
   getAttachmentUrl(path: string): string {
+    if (!path) return '';
+    // If it's already a full URL (Supabase), return as is
+    if (path.startsWith('http')) return path;
+
     const normalizedPath = path.replace(/\\/g, '/');
-    const pathAfterUploads = normalizedPath.split('uploads/').pop() || '';
+    const pathAfterUploads = normalizedPath.includes('uploads/') 
+      ? (normalizedPath.split('uploads/').pop() || '')
+      : normalizedPath;
     return `${environment.uploadUrl}/${pathAfterUploads}`;
+  }
+
+  /**
+   * @description Download an attachment file
+   */
+  downloadFile(url: string, fileName: string): void {
+    this.toast.info('Downloading file...');
+    
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        this.toast.success('Download started');
+      })
+      .catch(() => {
+        this.toast.error('Failed to download file. Try opening it in a new tab.');
+        window.open(url, '_blank');
+      });
   }
 
   /**
