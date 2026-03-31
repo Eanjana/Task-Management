@@ -44,3 +44,7 @@ GEMINI.md
 # System files
 .DS_Store
 Thumbs.db
+
+# uploaded files
+uploads/
+backend/uploads/
